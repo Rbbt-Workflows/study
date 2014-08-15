@@ -1,0 +1,16 @@
+- studies = user_studies[user];
+
+- action_card = ActionCard.new do
+  - input :study, :select, "Study", nil, :select_options => studies
+ 
+- action_card.require :study
+
+- action_card.description do
+
+  :markdown
+    Select a study to see samples with this mutation
+
+= action_card_render action_card do
+  - Study.setup(study)
+  = fragment study.action_link("mutation_report", "#{ entity } in #{ study }", :mutation => entity, :_ => rand)
+

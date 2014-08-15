@@ -1,0 +1,31 @@
+- action_card = ActionCard.new do
+  - input :list, :select, "Mutation list", nil, :html_options => {:class => 'favourite_lists', :type => "GenomicMutation"}
+- action_card.require :list
+
+- action_card.description do
+  :markdown
+    Report alterations over a given mutation list in the study #{entity}
+
+= action_card_render action_card do
+  - study = entity
+  - Study.setup(study)
+  - name = list
+
+  - if study.has_genotypes?
+    - mutations = Entity::List.load_list("GenomicMutation", list, user)
+
+    %h2 #{ name } in #{ study } (#{mutations.length})
+
+    - matches = study.knowledge_base.subset(:sample_mutations, :target => mutations, :source => :all)
+    - tsv = matches.tsv
+
+    %h3 Mutation overview 
+    %dl
+      %dt Samples (#{study.samples.select_by(:has_genotype?).length})
+      %dd= matches.source_entity.uniq.list_link :length, "Samples with #{ name } in #{ study }"
+
+      %dt Mutations (#{study.metagenotype.length})
+      %dd= matches.target_entity.uniq.list_link :length, "#{ name } in #{ study }"
+
+    = table :row_ids => :consume do
+      - tsv

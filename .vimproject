@@ -1,0 +1,62 @@
+Study=/$PWD filter="*.rb *.R *.js *.sass *.haml *.tsv" {
+ workflow.rb
+ workflow.md
+ lib=lib {
+  sinatra.rb
+
+  study.rb
+  tasks=study/tasks{
+   genotypes.rb
+  }
+
+  entity=rbbt/entity{
+   study.rb
+   study=study{
+    genotypes.rb
+    cnv.rb
+    snp.rb
+    methylation.rb
+   }
+  }
+ }
+ etc=etc{
+  study_repo
+ }
+ share=share{
+  rbbt_commands=rbbt_commands{
+   knowledge_base
+  }
+ }
+ www=www{
+  views=views{
+   entity=entity{
+    Study.haml
+    Study=Study{
+     binomial_significance.haml
+     gene_list_report.haml
+     gene_report.haml
+     mutation_list_report.haml
+     mutation_report.haml
+     tables.haml
+    }
+    Gene=Gene{
+     study_incidence.haml
+     study_report.haml
+     incidence.haml
+    }
+    GenomicMutation=GenomicMutation{
+     study_report.haml
+    }
+   }
+   entity_list=entity_list{
+    Gene=Gene{
+     study_report.haml
+     incidence.haml
+    }
+    GenomicMutation=GenomicMutation{
+     study_report.haml
+    }
+   }
+  }
+ }
+}

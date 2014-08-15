@@ -1,0 +1,57 @@
+- authorize!
+- studies = user_studies[user]
+- name = list_id
+
+= action_card_render ActionCard.new do
+
+  %h4 Genotype overview
+
+  %p Pvalues calculated by mutations-per-base-pair frequencies
+
+  - all_matches = {}
+  - pvalues = {}
+  - Study.setup studies
+  - Misc.bootstrap(studies) do |study|
+    - Study.setup study
+    - next unless study.has_genotypes?
+    - study.knowledge_base
+    - study.job(:binomial_significance).run(true)
+
+  - TSV.traverse studies do |study|
+    - Study.setup(study)
+    - next unless study.has_genotypes?
+    - log study
+    - kb = study.knowledge_base
+    - all_matches[study.to_s] = kb.subset(:sample_genes, :target => list, :source => :all)
+    - pvalues[study.to_s] = begin
+      - bs = study.job(:binomial_significance).run
+      - list.select{|g| bs.include?(g) and bs[g]["p.value"].to_f < 0.1 }
+
+  - fields = %w(Overlapping Affected Damaged Miss-spliced Broken Significant)
+  - tsv = TSV.setup({}, :key_field => "Study", :fields => fields, :type => :double)
+  - all_matches.each do |study,matches|
+    - next if matches.nil? or matches.empty?
+    - study = Study.setup(study.dup)
+    - num_samples = study.samples.select_by(:has_genotype?).length
+    - overlapping = matches.source_entity.uniq
+    - affected = matches.select_by(:info){|info| info["affected"] == "true" }.source_entity.uniq
+    - damaged = matches.select_by(:info){|info| info["damaged"] == "true" }.source_entity.uniq
+    - splicing = matches.select_by(:info){|info| info["splicing"] == "true" }.source_entity.uniq
+    - broken = matches.select_by(:info){|info| info["broken"] == "true" }.source_entity.uniq
+    
+    - values = (fields[0..-2].zip([overlapping, affected, damaged, splicing, broken])).collect do |type,list|
+      - if list and list.any?
+        - list.list_link("%.3g" % ((list_length = list.length).to_f * 100 / num_samples) + " % (#{list_length})", "Samples with #{name} #{type} in #{ study }")
+      - else
+        - "None"
+
+    - pvalue = pvalues[study].collect{|g| g.name }
+    - values.push pvalue
+    - tsv[study] = values
+
+  - tsv.fields[0..-2].each do |field|
+    - header field, "Link"
+  - header "Significant", "Associated Gene Name", :organism => list.organism
+  = table do
+    - tsv
+

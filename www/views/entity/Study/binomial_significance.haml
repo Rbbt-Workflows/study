@@ -1,0 +1,15 @@
+- study = entity
+
+- action_card = ActionCard.new
+
+- action_card.description do
+
+  :markdown
+    This action presents the results of the Sequence 'binomial_significance' task. The overall frequency of mutations is
+    computed by dividing the number of mutations by the number of bases covered by exons *of the genes harboring some mutation*.
+    This frequency is then used in a binomial test for each gene that checks if the number of mutations in that gene
+    exceeds the expected number.
+
+= action_card_render action_card do
+  = table :page => "1~p.value" do
+    - study.job(:binomial_significance, :mutations => study.metagenotype).run

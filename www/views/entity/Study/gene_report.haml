@@ -1,0 +1,54 @@
+- action_card = ActionCard.new do
+  - input :gene, :string, "Gene"
+- action_card.require :gene
+- action_card.description do
+  :markdown
+    Report alterations over a given gene in the study #{entity}
+
+= action_card_render action_card do
+
+  - gene = get_gene gene
+  - raise ParameterException, "Gene not recognize" if gene.nil?
+  - name = gene.name || gene 
+
+  - study = entity
+
+  %h2 #{ name } in #{ study }
+
+  - if study.has_genotypes?
+
+    - Study.setup(study)
+
+    - matches = study.knowledge_base.subset(:mutation_info, :target => [gene], :source => :all)
+    - tsv = matches.tsv
+
+    %h3 Mutation overview (#{study.metagenotype.length})
+    %dl
+      %dt All mutations
+      %dd= matches.source_entity.list_link :length, "All mutations over #{ name } in #{ study }"
+
+      %dt Relevant mutations
+      %dd= matches.select{|item| item.info.select{|k,v| v.to_s == "true" }.any? }.source_entity.uniq.list_link :length, "Relevant mutations (uniq) over #{ name } in #{ study }"
+
+      %dt Damaging mutations
+      %dd= matches.select{|item| item.info["broken"].to_s == "true" }.source_entity.uniq.list_link :length, "Damaging mutations (uniq) over #{ name } in #{ study }"
+
+    = table :row_ids => :consume do
+      - tsv
+
+    - matches = study.knowledge_base.subset(:sample_genes, :target => [gene], :source => :all)
+    - tsv = matches.tsv
+
+    %h3 Sample overview (#{study.samples.select_by(:has_genotype?).length})
+    %dl
+      %dt All samples
+      %dd= matches.source_entity.uniq.list_link :length, "Samples with mutations over #{ name } in #{ study }"
+
+      %dt Samples affected
+      %dd= matches.select{|item| item.info.select{|k,v| v.to_s == "true" }.any? }.source_entity.uniq.list_link :length, "Samples with relevant mutations over #{ name } in #{ study }"
+
+      %dt Samples damaged
+      %dd= matches.select{|item| item.info["broken"].to_s == "true" }.source_entity.uniq.list_link :length, "Samples with damaging mutations over #{ name } in #{ study }"
+
+    = table :row_ids => :consume do
+      - tsv

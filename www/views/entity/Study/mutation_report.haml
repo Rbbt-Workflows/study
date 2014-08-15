@@ -1,0 +1,29 @@
+- action_card = ActionCard.new do
+  - input :mutation, :string, "Mutation"
+- action_card.require :mutation
+- action_card.description do
+  :markdown
+    Report alterations over a given mutation in the study #{entity}
+
+= action_card_render action_card do
+
+  - name = mutation
+
+  - study = entity
+
+  %h2 #{ name } in #{ study }
+
+  - if study.has_genotypes?
+
+    - Study.setup(study)
+
+    - matches = study.knowledge_base.subset(:sample_mutations, :target => [mutation], :source => :all)
+    - tsv = matches.tsv
+
+    %h3 Mutation overview 
+    %dl
+      %dt Samples (#{study.samples.select_by(:has_genotype?).length})
+      %dd= matches.source_entity.uniq.list_link :length, "Samples with mutation #{ name } in #{ study }"
+
+    = table :row_ids => :consume do
+      - tsv

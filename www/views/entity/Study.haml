@@ -1,0 +1,113 @@
+- study = entity
+
+- entity_card = EntityCard.new(entity)
+- entity_card.name = entity
+- entity_card.long_name = entity.metadata[:condition]
+- entity_card.meta
+- entity_card.meta do
+  :plain
+    #{hash2dl entity.metadata}
+  %dl
+
+    %dt Registered samples 
+    %dd= study.samples.list_link :length, "Samples in #{ entity }"
+
+    - if entity.respond_to?(:has_genotypes?) and entity.has_genotypes?
+      - samples = study.samples.select{|s| s.has_genotype? }
+      %dt Genotyped samples
+      %dd= samples.list_link :length, "Genotyped samples in #{ entity }"
+
+    - if entity.respond_to?(:has_cnv?) and entity.has_cnv?
+      - samples = study.samples.select{|s| s.has_cnv? }
+      %dt CNV samples
+      %dd= samples.list_link :length, "CNV samples in #{ entity }"
+
+    - if entity.respond_to?(:matrices) and entity.matrices.include? "gene_expression"
+      - samples = study.samples.select{|s| s.has_gene_expression? }
+      %dt Gene expression samples
+      %dd= samples.list_link :length, "Gene expression samples in #{ entity }"
+
+- entity_card.description do
+  - if entity.has_genotypes?
+    .row
+
+      .mutations.large-6.columns
+        %h3 Mutations
+        = fragment do
+          - mutation_info = study.mutation_info
+          - metagenotype = study.metagenotype
+          %table
+            %tbody
+
+              %tr
+                %th All Mutations
+                %td= metagenotype.list_link :length, "All mutations in #{ entity }"
+          
+              %tr
+                %th Relevant Mutations
+                %td= metagenotype.select{|m| mutation_info[m] and mutation_info[m].flatten.include?("true") }.list_link :length, "Relevant mutations in #{ entity }"
+
+              %tr
+                %th Damaging Mutations (incl. splicing)
+                %td= metagenotype.select{|m| mutation_info[m] and mutation_info[m]["broken"].collect{|v| v.to_s == "true" }.any? }.list_link :length, "Damaging mutations in #{ entity }"
+
+              %tr
+                %th Recurrent Mutations
+                - recurrent = Misc.counts(metagenotype).select{|m,c| c > 1 }.collect{|m,c| m }
+                - metagenotype.annotate recurrent
+                - recurrent.extend AnnotatedArray
+                %td= recurrent.list_link :length, "Recurrent mutations in #{ entity }"
+
+      .genes.large-6.columns
+        %h3 Genes
+        = fragment do
+          %table
+            %tbody
+
+              %tr
+                %th All Overlapping Genes
+                %td= entity.get_genes.list_link :length, "All overlapping genes in #{ entity }"
+          
+              %tr
+                %th Affected genes
+                %td= entity.get_genes(:affected).list_link :length, "Affected genes in #{ entity }"
+
+              %tr
+                %th Damaged genes
+                %td= entity.get_genes(:damaged).list_link :length, "Damaged genes in #{ entity }"
+
+              %tr
+                %th Broken genes 
+                %td= entity.get_genes(:broken).list_link :length, "Broken genes in #{ entity }"
+
+              %tr
+                %th Missing genes
+                %td= entity.get_genes(:missing?).list_link :length, "Missing genes in #{ entity }"
+
+              %tr
+                %th Surely missing genes
+                %td= entity.get_genes(:missing).list_link :length, "Surely missing genes in #{ entity }"
+
+              %tr
+                %th Recurrent genes
+                %td= entity.get_genes(:recurrent).list_link :length, "Recurrent genes in #{ entity }"
+
+
+      %p
+
+        Affected genes have non-synonymous mutations or mutations on splicing
+        sites. These mutations are considered relevant, as opossed to other
+        intergenic, intronic and synonymous mutations which are disregarded for
+        lack of interpretation tools (for now). Damaged genes have alterations
+        believed to compromise the isoforms function. Broken are genes believed
+        to have at least one of the alleles damaged or affected by splicing.
+        The `missing` category is intended for genetic analysis where
+        considerations of zygosity are important. Surely missing have
+        homozygous damaging mutations that indicate the lack of functional
+        alleles for that gene.  Recurrent genes are affected by mutations in at
+        least two samples
+
+- entity_card.action_controller = default_action_controller entity
+
+= entity_card_render entity_card
+

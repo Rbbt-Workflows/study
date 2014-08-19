@@ -38,9 +38,9 @@ Study=/$PWD filter="*.rb *.R *.js *.sass *.haml *.tsv" {
      mutation_list_report.haml
      mutation_report.haml
      tables.haml
+     mutation_details.haml
     }
     Gene=Gene{
-     study_incidence.haml
      study_report.haml
      incidence.haml
     }

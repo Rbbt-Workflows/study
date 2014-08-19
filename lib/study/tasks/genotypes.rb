@@ -1,5 +1,21 @@
 module Study
 
+  task :organism => :string do
+    Study.organism(study)
+  end
+
+  task :metagenotype => :array do
+    Study.samples(study).collect{|sample|
+      begin
+        sample = [study, sample] * ":" unless sample.include? study
+        Sample.mutations(sample).read.split("\n")
+      rescue Exception
+        []
+      end
+    }.flatten
+  end
+
+
   task :mutation_info => :tsv do
     tsv = nil
     
@@ -31,6 +47,11 @@ module Study
   end
 
   dep :mutation_info
+  task :mutation_samples => :tsv do
+    step(:mutation_info).join.path.tsv :fields => ["Sample"], :type => :flat
+  end
+
+  dep :mutation_info
   task :sample_genes => :tsv do
     # ToDo: Check when Sample is in list of fields
     fields = TSV.parse_header(step(:mutation_info).join.path).fields - ["Sample"]
@@ -44,7 +65,7 @@ module Study
     genotyped_samples = study.samples.select{|s| s.has_genotype? }
 
     TSV.traverse genotyped_samples, :into => tsv, :cpus => 10 do |sample|
-      Sample.setup sample
+      Sample.setup sample, study
       mutations = sample_mutations[sample]
       broken = sample.broken_genes
       surely_broken = sample.surely_broken_genes
@@ -77,7 +98,18 @@ module Study
     tsv
   end
 
+  dep :organism
+  dep :metagenotype
+  dep Sequence, :binomial_significance, :organism => :organism, :mutations => :metagenotype 
   task :binomial_significance => :tsv do
-    Sequence.job(:binomial_significance, study, :mutations => study.metagenotype.sort, :threshold => 0.1, :organism => organism).run
+    TSV.get_stream step(:binomial_significance)
+  end
+
+  Workflow.require_workflow "MutationEnrichment"
+  dep :organism
+  dep :mutation_samples
+  dep MutationEnrichment, :sample_pathway_enrichment, :organism => :organism, :mutations => :mutation_samples 
+  task :sample_enrichment => :tsv do
+    TSV.get_stream step(:sample_pathway_enrichment)
   end
 end

@@ -94,20 +94,3 @@
   - tsv
 
 
--# 
-  - log :affected_genes, "Affected genes"
-  %h2 Affected Gene Overview
-  = table do
-    - pairs = study.knowledge_base.get_index(:mutated_genes, :source => "Ensembl Gene ID").select(%w(altered damaged broken)).keys
-    - tsv =AssociationItem.incidence(pairs, "Ensembl Gene ID")
-    - tsv.namespace = study.organism
-    - tsv
-
-  - log :damaged_genes, "Damaged or broken genes"
-  %h2 Damaged Gene Overview
-  = table do
-    - pairs = study.knowledge_base.get_index(:mutated_genes, :source => "Ensembl Gene ID").select(%w(damaged broken)).keys
-    - tsv = AssociationItem.incidence(pairs, "Ensembl Gene ID")
-    - tsv.namespace = study.organism
-    - tsv
-

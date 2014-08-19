@@ -1,0 +1,103 @@
+- study = entity
+- genotyped_samples = study.samples.select_by(:has_genotype?)
+
+- log :mutation_kind, "Mutation kind"
+%h2 Mutation kind
+- header "Sample", "Sample", :cohort => study
+= table do
+  - tsv = TSV.setup({}, :key_field => "Sample", :fields => ["SNV", "Insertion", "Deletion"], :type => :list, :cast => :to_i)
+  - genotyped_samples.each do |sample|
+    - mutation_details = sample.mutation_details
+    - mutations = mutation_details.select("Type"){|type| type != "none" and type != "unknown"}.keys
+    - snv = mutations.select_by(:base){|b| b =~ /^[ACTG]$/}
+    - ins = mutations.select_by(:base){|b| b =~ /^[^-]{2,}$/}
+    - del = mutations.select_by(:base){|b| b =~ /-/}
+    - tsv[sample] = [snv.length, ins.length, del.length]
+  - tsv
+
+- log :mutation_type, "Mutation type"
+%h2 Mutation type
+- header "Sample", "Sample", :cohort => study
+= table do
+  - tsv = TSV.setup({}, :key_field => "Sample", :fields => ["Transitions", "Transversions"], :type => :list, :cast => :to_i)
+  - genotyped_samples.each do |sample|
+    - mutation_details = sample.mutation_details
+    - transi = mutation_details.select("Type"){|type| type == "transition" }
+    - transv = mutation_details.select("Type"){|type| type == "transversion" }
+    - tsv[sample] = [transi.length, transv.length]
+  - tsv
+
+- log :mutation_change, "Mutation change"
+%h2 Mutation change (only SNV)
+- genotyped_samples.each do |sample|
+  - header sample, "NumericValue"
+= table do
+  - tsv = TSV.setup({}, :key_field => "Sample", :fields => [], :type => :list, :cast => :to_i)
+  - sample_changes = {}
+  - genotyped_samples.each do |sample|
+    - mutation_details = sample.mutation_details
+    - mutations = mutation_details.select("Type"){|type| type == "transition" or type == "transversion"}
+    - changes = (sample_changes[sample] ||= {})
+    - changes["All"] = mutations
+    - mutations.each do |mutation|
+      - reference, change = mutation_details[mutation].values_at "Reference", "Change"
+      - change = [reference, change] * ">"
+      - changes[change] ||= []
+      - changes[change] << mutation
+  - all_changes = sample_changes.values.collect{|changes| changes.keys}.flatten.uniq.sort
+  - all_changes = ["All"].concat(all_changes - ["All"])
+  - tsv.fields = all_changes
+  - sample_changes.each do |sample,changes|
+    - tsv[sample] = changes.values_at(*all_changes).collect{|list| list ? list.length : 0 }
+  - tsv.transpose "Change"
+
+
+- log :mutation_context_change, "Mutation context change"
+%h2 Mutation context change (only SNV)
+- genotyped_samples.each do |sample|
+  - header sample, "NumericValue"
+= table do
+  - tsv = TSV.setup({}, :key_field => "Sample", :fields => [], :type => :list, :cast => :to_i)
+  - sample_changes = {}
+  - genotyped_samples.each do |sample|
+    - mutation_details = sample.mutation_details
+    - mutations = mutation_details.select("Type"){|type| type == "transition" or type == "transversion"}
+    - changes = (sample_changes[sample] ||= {})
+    - changes["All"] = mutations
+    - mutations.each do |mutation|
+      - change = mutation_details[mutation]["Context change"]
+      - changes[change] ||= []
+      - changes[change] << mutation
+  - all_changes = sample_changes.values.collect{|changes| changes.keys}.flatten.uniq.sort
+  - all_changes = ["All"].concat(all_changes - ["All"])
+  - tsv.fields = all_changes
+  - sample_changes.each do |sample,changes|
+    - tsv[sample] = changes.values_at(*all_changes).collect{|list| list ? list.length : 0 }
+  - tsv.transpose "Context change"
+
+
+- log :mutation_consequence, "Mutation consequence"
+%h2 Mutation consequence
+- header "Sample", "Sample", :cohort => study
+= table do
+  - tsv = TSV.setup({}, :key_field => "Sample", :fields => ["Not relevant", "Relevant"], :type => :list, :cast => :to_i, :namespace => study.organism)
+  - study.samples.select_by(:has_genotype?).each do |sample|
+    - mutation_genes = sample.mutation_genes
+    - affected = mutation_genes.select("affected" => "true").keys
+    - splicing = mutation_genes.select("splicing" => "true").keys
+    - non_synonymous = (affected + splicing).uniq
+    - synonymous = sample.genomic_mutations - non_synonymous
+    - tsv[sample] = [synonymous.length, non_synonymous.length]
+  - tsv
+
+- log :mutation_damage, "Mutation damage"
+%h2 Mutation damage
+- header "Sample", "Sample", :cohort => study
+= table do
+  - tsv = TSV.setup({}, :key_field => "Sample", :fields => ["Not damaging", "Damaging"], :type => :list, :cast => :to_i, :namespace => study.organism)
+  - study.samples.select_by(:has_genotype?).each do |sample|
+    - mutation_genes = sample.mutation_genes
+    - damaging = mutation_genes.select("damaged" => "true").keys
+    - not_damaging = sample.genomic_mutations - damaging
+    - tsv[sample] = [not_damaging.length, damaging.length]
+  - tsv

@@ -29,13 +29,15 @@ require 'study/tasks/mutation_signatures'
 module Study
   extend Entity 
 
-  property :job do |name|
-    Study.job(name.to_sym, self)
+  property :job do |name,options={}|
+    Study.job(name.to_sym, self,options)
   end
 
   Study.tasks.each do |name, b|
-    property name.to_sym => :single do |run=true|
-      job = job(name)
+    property name.to_sym => :single do |run=true, options={}|
+      run, options = true, run if Hash === run
+
+      job = job(name,options)
       case run
       when nil, TrueClass
         job.run 

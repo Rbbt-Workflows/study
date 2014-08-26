@@ -1,0 +1,17 @@
+#!/usr/bin/env ruby
+
+Workflow.require_workflow "ICGC"
+Sample.study_repo = Path.setup(ARGV.shift.dup) if ARGV.any? 
+
+studies = Sample.all_studies
+
+Misc.bootstrap studies do |study|
+  Study.setup(study)
+  study.knowledge_base.registry.keys.each do |database|
+    study.knowledge_base.subset(database, :target => [], :source => [])
+  end
+  study.samples.each do |sample|
+    next unless sample.has_genotype?
+    sample.mutation_details
+  end
+end

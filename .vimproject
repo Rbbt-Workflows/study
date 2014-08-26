@@ -25,6 +25,7 @@ Study=/$PWD filter="*.rb *.R *.js *.sass *.haml *.tsv" {
  share=share{
   rbbt_commands=rbbt_commands{
    knowledge_base
+   bootstrap
   }
  }
  www=www{

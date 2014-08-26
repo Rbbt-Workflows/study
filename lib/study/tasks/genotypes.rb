@@ -30,10 +30,11 @@ module Study
     genotyped_samples.each do |sample|
       sample_mutation_info = sample.mutation_genes
       sample_mutations[sample] = Set.new sample_mutation_info.keys
+      good_fields = sample_mutation_info.fields - ["missing"]
       if tsv.nil?
-        tsv = sample_mutation_info
+        tsv = sample_mutation_info.slice(good_fields)
       else
-        tsv.merge! sample_mutation_info
+        tsv.merge! sample_mutation_info.slice(good_fields)
       end
     end
 

@@ -13,3 +13,7 @@ helpers do
     GenomicMutation.setup(mutation, nil, organism, true)
   end
 end
+
+Study.studies.each do |study|
+  KnowledgeBaseRESTHelpers.add_syndication study, Study.setup(study).knowledge_base
+end

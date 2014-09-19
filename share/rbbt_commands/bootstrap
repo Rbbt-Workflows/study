@@ -8,7 +8,7 @@ studies = Sample.all_studies
 Misc.bootstrap studies do |study|
   Study.setup(study)
   study.knowledge_base.registry.keys.each do |database|
-    study.knowledge_base.subset(database, :target => [], :source => [])
+    study.knowledge_base.subset(database, :target => :all, :source => :all)
   end
   study.samples.each do |sample|
     next unless sample.has_genotype?

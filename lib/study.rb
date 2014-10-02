@@ -11,6 +11,7 @@ module Study
 
     def study_dir=(dir)
       dir = Path.setup dir.dup unless Path === dir
+      Sample.study_repo = dir
       @study_dir = dir
     end
   end

@@ -31,7 +31,7 @@
   - if entity.has_genotypes?
     .row
 
-      .mutations.large-6.columns
+      .mutations.column
         %h3 Mutations
         = fragment do
           - mutation_info = study.mutation_info
@@ -58,7 +58,7 @@
                 - recurrent.extend AnnotatedArray
                 %td= recurrent.list_link :length, "Recurrent mutations in #{ entity }"
 
-      .genes.large-6.columns
+      .genes.column
         %h3 Genes
         = fragment do
           %table
@@ -92,7 +92,14 @@
                 %th Recurrent genes
                 %td= entity.get_genes(:recurrent).list_link :length, "Recurrent genes in #{ entity }"
 
+    .row
+      .gene_samples.column
+        %h3 Gene status per sample
+        = table :row_ids => :consume do
+          - matches = study.knowledge_base.subset(:sample_genes, :all)
+          - matches.tsv
 
+    .row
       %p
 
         Affected genes have non-synonymous mutations or mutations on splicing

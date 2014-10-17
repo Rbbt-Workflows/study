@@ -30,6 +30,7 @@
 
   - fields = %w(Overlapping Affected Damaged Splicing Broken P-value)
   - tsv = TSV.setup({}, :key_field => "Study", :fields => fields, :type => :double)
+  - log "Processing hits"
   - all_matches.each do |study,matches|
     - next if matches.nil? or matches.empty?
     - study = Study.setup(study.dup)
@@ -49,6 +50,8 @@
     - pvalue = pvalues[study]
     - values.push pvalue
     - tsv[study] = values
+
+  - log "Producing table"
   - tsv.fields[0..-2].each do |field|
     - header field, "Link"
   = table do

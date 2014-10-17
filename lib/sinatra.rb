@@ -15,5 +15,6 @@ helpers do
 end
 
 Study.studies.each do |study|
+  Log.medium("Registering knowledge base for Study #{ study }")
   KnowledgeBaseRESTHelpers.add_syndication study, Study.setup(study).knowledge_base
 end

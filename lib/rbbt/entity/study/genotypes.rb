@@ -3,8 +3,13 @@ module Study
     study_info(study)[:watson]
   end
 
+  def genotyped_samples
+    @genotyped_samples ||= Sample.setup(Study.genotyped_samples(self), self)
+  end
+
   def has_genotypes?
-    @has_genotypes ||= samples.select{|s| s.has_genotype? }.any?
+    #@has_genotypes ||= samples.select{|s| s.has_genotype? }.any?
+    @has_genotypes ||= genotyped_samples.any?
   end
 
   attr_accessor :watson

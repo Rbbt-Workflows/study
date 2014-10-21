@@ -1,5 +1,9 @@
-- action_card = ActionCard.new do
-  - input :gene, :string, "Gene"
+- action_card = ActionCard.new 
+
+- unless defined? gene and gene and not gene.empty?
+  - action_card.action_parameters = Proc.new do
+    - input :gene, :string, "Gene"
+
 - action_card.require :gene
 - action_card.description do
   :markdown
@@ -7,13 +11,11 @@
 
 = action_card_render action_card do
 
-  - gene = get_gene gene
+  - gene = get_gene gene, entity.organism
   - raise ParameterException, "Gene not recognize" if gene.nil?
   - name = gene.name || gene 
 
   - study = entity
-
-  %h2 #{ name } in #{ study }
 
   - if study.has_genotypes?
 
@@ -22,9 +24,9 @@
     - matches = study.knowledge_base.subset(:mutation_info, :target => [gene], :source => :all)
     - tsv = matches.tsv
 
-    %h3 Mutation overview (#{study.metagenotype.length})
+    %h5 #{name} Mutation overview (#{study.metagenotype.length} total mutations)
     %dl
-      %dt All mutations
+      %dt All overlapping mutations
       %dd= matches.source_entity.list_link :length, "All mutations over #{ name } in #{ study }"
 
       %dt Relevant mutations
@@ -39,9 +41,9 @@
     - matches = study.knowledge_base.subset(:sample_genes, :target => [gene], :source => :all)
     - tsv = matches.tsv
 
-    %h3 Sample overview (#{study.samples.select_by(:has_genotype?).length})
+    %h5 Sample #{name} overview (#{study.samples.select_by(:has_genotype?).length} total samples)
     %dl
-      %dt All samples
+      %dt All overlapping samples
       %dd= matches.source_entity.uniq.list_link :length, "Samples with mutations over #{ name } in #{ study }"
 
       %dt Samples affected

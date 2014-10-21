@@ -20,14 +20,16 @@ module Study
     tsv = nil
     
     sample_mutations = {}
-    genotyped_samples = study.samples.select{|s| s.has_genotype? }
+    genotyped_samples = study.genotyped_samples
     raise "No genotyped samples" if genotyped_samples.empty?
 
+    log :bootstrap, "Bootstrapping genotypes_samples: #{Misc.fingerprint genotyped_samples}"
     Misc.bootstrap genotyped_samples do |sample|
       sample.mutation_genes
     end
 
     genotyped_samples.each do |sample|
+      log sample
       sample_mutation_info = sample.mutation_genes
       sample_mutations[sample] = Set.new sample_mutation_info.keys
       good_fields = sample_mutation_info.fields - ["missing"]
@@ -63,7 +65,7 @@ module Study
     fields << "missing"
     tsv = TSV.setup({}, :key_field => "Sample", :fields => fields, :namespace => organism, :type => :double)
 
-    genotyped_samples = study.samples.select{|s| s.has_genotype? }
+    genotyped_samples = study.genotyped_samples
 
     TSV.traverse genotyped_samples, :into => tsv, :cpus => 10 do |sample|
       Sample.setup sample, study

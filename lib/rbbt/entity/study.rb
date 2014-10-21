@@ -26,24 +26,15 @@ module Study
                                     knowledge_base.entity_options["GenomicMutation"] = {:watson => watson }
 
                                     if self.has_genotypes?
-                                      #knowledge_base.register :mutation_info do
-                                      #  path = self.job(:mutation_info).run(true).join.path
-                                      #  fields = TSV.parse_header(path).fields
-                                      #  path.tsv :fields => fields - ["Sample"]
-                                      #end 
+                                      job = self.job(:mutation_info)
+                                      tsv = job.run
 
-                                      fields = self.job(:mutation_info).run.fields - ["Sample"]
-                                      knowledge_base.register :mutation_info, self.job(:mutation_info).run(true).join.path, :source => "Genomic Mutation", :target => "Ensembl Gene ID", :fields => fields
+                                      fields = tsv.fields - ["Sample"]
+                                      knowledge_base.register :mutation_info, job.path, :source => "Genomic Mutation", :target => "Ensembl Gene ID", :fields => fields, :merge => true
 
-                                      knowledge_base.register :sample_mutations, self.job(:mutation_info).run(true).join.path, :source => "Sample", :target => "Genomic Mutation", :merge => true
+                                      knowledge_base.register :sample_mutations, job.path, :source => "Sample", :target => "Genomic Mutation", :merge => true
 
-                                      #knowledge_base.register :sample_mutations do
-                                      #  path = self.job(:mutation_info).run(true).join.path
-                                      #  fields = TSV.parse_header(path).fields
-                                      #  path.tsv :key_field => "Sample", :fields => ["Genomic Mutation"], :merge => true, :type => :double
-                                      #end 
-
-                                      knowledge_base.register :sample_genes, self.job(:mutation_info).run(true).join.path
+                                      knowledge_base.register :sample_genes, self.job(:sample_genes).run(true).join.path
                                     end
 
 

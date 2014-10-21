@@ -2,6 +2,7 @@
 
 - action_card = ActionCard.new do
   - input :study, :select, "Study", nil, :select_options => studies
+  - input :organism, :hidden, "Organism code", entity.organism
  
 - action_card.require :study
 

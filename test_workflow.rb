@@ -7,7 +7,7 @@ Workflow.require_workflow "Study"
 require 'rbbt/entity/study'
 
 class TestStudy < Test::Unit::TestCase
-  def test_bladder_sample_genes
+  def _test_bladder_sample_genes
     study = Study.setup("bladder-preal-17samples")
     assert study.knowledge_base.get_index(:sample_genes, :persist => false).include? "11401~ENSG00000181555"
 
@@ -17,10 +17,19 @@ class TestStudy < Test::Unit::TestCase
     assert_equal "true", index["11401~ENSG00000183337"]["affected"]
   end
 
-  def test_bladder_sample_genes_names
+  def _test_bladder_sample_genes_names
     study = Study.setup("bladder-preal-17samples")
     kb = study.knowledge_base
     assert kb.get_index(:sample_genes, :persist => false, :target_format => "Associated Gene Name").include? "11401~BCOR"
+  end
+
+  def test_CLL
+    study = Study.setup("Chronic_Lymphocytic_Leukemia-ISC_MICINN-ES")
+    kb = study.knowledge_base
+    index = kb.get_index(:sample_genes, :persist => false, :target_format => "Associated Gene Name")
+    Log.tsv index
+    sf3b1_count = index.keys.select{|k| k.partition("~").last == "SF3B1"}
+    iii sf3b1_count
   end
 end
 

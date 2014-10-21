@@ -12,5 +12,5 @@
 
 = action_card_render action_card do
   - Study.setup(study)
-  = fragment study.action_link("gene_list_report", "#{ list_id } in #{ study }", :list => list_id, :_ => rand)
+  = fragment study.action_link("gene_list_report", "#{ list_id } in #{ study }", :list => list_id, :_ => rand, :noparams => true)
 

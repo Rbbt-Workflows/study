@@ -5,7 +5,8 @@ Sample.study_repo = Path.setup(ARGV.shift.dup) if ARGV.any?
 
 studies = Sample.all_studies
 
-Misc.bootstrap studies do |study|
+$cpus ||= 3
+Misc.bootstrap studies, :respawn => true, :cpus => $cpus do |study|
   Study.setup(study)
   study.knowledge_base.registry.keys.each do |database|
     study.knowledge_base.subset(database, :target => :all, :source => :all)

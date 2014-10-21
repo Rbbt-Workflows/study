@@ -31,12 +31,17 @@ module Study
     study_info(study)[:users]
   end
 
+  def self.genotyped_samples(study)
+    path = find_study(study)
+    path.genotypes.glob("*").collect{|f| File.basename f }
+  end
+
   def self.sample_info(study)
     path = find_study(study)
     organism = study_info(study)[:organism]
 
     return path.samples.tsv :namespace => organism if path.samples.exists?
-    samples = path.genotypes.glob("*").collect{|f| File.basename f }
+    samples = genotyped_samples(study)
     tsv = TSV.setup(samples, :key_field => "Sample", :fields => [], :type => :list, :namespace => organism)
     tsv.entity_options = {:cohort => study, :organism => organism}
     tsv

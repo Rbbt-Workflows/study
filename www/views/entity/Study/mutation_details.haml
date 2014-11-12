@@ -1,5 +1,5 @@
 - study = entity
-- genotyped_samples = study.samples.select_by(:has_genotype?)
+- genotyped_samples = study.genotyped_samples
 
 - log :mutation_kind, "Mutation kind"
 %h2 Mutation kind
@@ -81,7 +81,7 @@
 - header "Sample", "Sample", :cohort => study
 = table do
   - tsv = TSV.setup({}, :key_field => "Sample", :fields => ["Not relevant", "Relevant"], :type => :list, :cast => :to_i, :namespace => study.organism)
-  - study.samples.select_by(:has_genotype?).each do |sample|
+  - study.genotyped_samples.each do |sample|
     - mutation_genes = sample.mutation_genes
     - affected = mutation_genes.select("affected" => "true").keys
     - splicing = mutation_genes.select("splicing" => "true").keys
@@ -95,7 +95,7 @@
 - header "Sample", "Sample", :cohort => study
 = table do
   - tsv = TSV.setup({}, :key_field => "Sample", :fields => ["Not damaging", "Damaging"], :type => :list, :cast => :to_i, :namespace => study.organism)
-  - study.samples.select_by(:has_genotype?).each do |sample|
+  - study.genotyped_samples.each do |sample|
     - mutation_genes = sample.mutation_genes
     - damaging = mutation_genes.select("damaged" => "true").keys
     - not_damaging = sample.genomic_mutations - damaging

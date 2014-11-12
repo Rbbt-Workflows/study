@@ -5,7 +5,7 @@ module Study
   end
 
   task :metagenotype => :array do
-    Study.samples(study).collect{|sample|
+    study.genotyped_samples.collect{|sample|
       begin
         sample = [study, sample] * ":" unless sample.include? study
         Sample.mutations(sample).read.split("\n")
@@ -23,13 +23,11 @@ module Study
     genotyped_samples = study.genotyped_samples
     raise "No genotyped samples" if genotyped_samples.empty?
 
-    log :bootstrap, "Bootstrapping genotypes_samples: #{Misc.fingerprint genotyped_samples}"
     Misc.bootstrap genotyped_samples do |sample|
       sample.mutation_genes
     end
 
     genotyped_samples.each do |sample|
-      log sample
       sample_mutation_info = sample.mutation_genes
       sample_mutations[sample] = Set.new sample_mutation_info.keys
       good_fields = sample_mutation_info.fields - ["missing"]
@@ -57,8 +55,11 @@ module Study
   dep :mutation_info
   task :sample_genes => :tsv do
     # ToDo: Check when Sample is in list of fields
+    
+    log :loading, "Loading mutation info for #{ study }"
+
     fields = TSV.parse_header(step(:mutation_info).join.path).fields - ["Sample"]
-    mutation_info = step(:mutation_info).join.path.tsv(:fields => fields)
+    mutation_info = step(:mutation_info).join.path.tsv(:fields => fields, :unnamed => true)
     sample_mutations = step(:mutation_info).join.path.tsv(:key_field => "Sample", :fields => ["Genomic Mutation"], :merge => true, :unnamed => true, :type => :double).to_flat
 
     fields << "missing?"
@@ -67,34 +68,47 @@ module Study
 
     genotyped_samples = study.genotyped_samples
 
-    TSV.traverse genotyped_samples, :into => tsv, :cpus => 10 do |sample|
+    TSV.traverse genotyped_samples, :into => tsv, :cpus => [genotyped_samples.length / 10, 5].min, :respawn => 1.8, :bar => "Sample genes for study" do |sample|
       Sample.setup sample, study
-      mutations = sample_mutations[sample]
-      broken = sample.broken_genes
-      surely_broken = sample.surely_broken_genes
-      mutation_values_list = mutation_info.select(:key => mutations).values
+
+      mutations = broken = surely_broken = mutation_values_list = nil
+
+      log :prepare, "Prepare info for #{ sample }" do
+        mutations = sample_mutations[sample]
+        broken = sample.broken_genes
+        surely_broken = sample.surely_broken_genes
+        mutation_values_list = mutation_info.select(:key => mutations).values
+      end
+
       gene_mutations = {}
-      mutation_values_list.each do |mutation_values|
-        Misc.zip_fields(mutation_values).each do |_v|
-          gene, *values = _v
-          gene_mutations[gene] ||= []
-          gene_mutations[gene] << (values + [broken.include?(gene), surely_broken.include?(gene)])
+      values = nil
+      
+      log :gene_mutations, "Compute gene_mutation info for #{ sample }" do
+        mutation_values_list.each do |mutation_values|
+          Misc.zip_fields(mutation_values).each do |_v|
+            gene, *values = _v
+            gene_mutations[gene] ||= []
+            gene_mutations[gene] << (values + [broken.include?(gene), surely_broken.include?(gene)])
+          end
         end
       end
 
-      values = gene_mutations.collect{|gene,list| 
-        first = list.first.dup
-        merged = list.inject(first) do |acc,e|
-          e.each_with_index do |c,i|
-            acc[i] = true if (acc[i] and acc[i] != "false") or c == "true"
+      log :gene_values, "Compute gene based values for #{ sample }" do
+        values = gene_mutations.collect{|gene,list| 
+          first = list.first.dup
+          merged = list.inject(first) do |acc,e|
+            e.each_with_index do |c,i|
+              acc[i] = true if (acc[i] and acc[i] != "false") or c == "true"
+            end
+            acc
           end
-          acc
-        end
-        merged.unshift gene
-        merged.flatten
-      }
+          merged.unshift gene
+          merged.flatten
+        }
+      end
 
       new_values = Misc.zip_fields(values)
+
       [sample,  new_values]
     end
 

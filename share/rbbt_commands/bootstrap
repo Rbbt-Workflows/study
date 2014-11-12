@@ -1,18 +1,48 @@
 #!/usr/bin/env ruby
 
-Workflow.require_workflow "ICGC"
+require 'rbbt-util'
+require 'rbbt/util/simpleopt'
+require 'rbbt/workflow'
+
+Workflow.require_workflow "Study"
+
+$0 = "rbbt #{$previous_commands*""} #{ File.basename(__FILE__) }" if $previous_commands
+
+options = SOPT.setup <<EOF
+
+Bootstrap studies from a directory
+
+$ rbbt workflow cmd Study [<directory>] [<study>,<study>,...]
+
+If no directory is used, the default is used #{Sample.study_repo}
+
+--cpus CPUs to use concurrently
+-h--help Print this help
+EOF
+rbbt_usage and exit 0 if options[:help]
+
 Sample.study_repo = Path.setup(ARGV.shift.dup) if ARGV.any? 
 
-studies = Sample.all_studies
+if ARGV.any?
+  studies = Study.setup(ARGV.shift.split(","))
+else
+  studies = Sample.all_studies
+end
 
-$cpus ||= 3
-Misc.bootstrap studies, :respawn => true, :cpus => $cpus do |study|
+$cpus ||= options[:cpus] || 3
+
+Misc.bootstrap studies, $cpus.to_i / 2, :respawn => :always do |study|
   Study.setup(study)
-  study.knowledge_base.registry.keys.each do |database|
-    study.knowledge_base.subset(database, :target => :all, :source => :all)
-  end
-  study.samples.each do |sample|
-    next unless sample.has_genotype?
+
+  Misc.bootstrap study.genotyped_samples, $cpus.to_i / 2 do |sample|
     sample.mutation_details
   end
+
+  study.binomial_significance
+
+  study.knowledge_base.registry.keys.each do |database|
+    study.knowledge_base.get_index(database).reverse
+  end
 end
+
+

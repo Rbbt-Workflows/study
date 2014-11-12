@@ -13,7 +13,7 @@
     %dd= study.samples.list_link :length, "Samples in #{ entity }"
 
     - if entity.respond_to?(:has_genotypes?) and entity.has_genotypes?
-      - samples = study.samples.select{|s| s.has_genotype? }
+      - samples = study.genotyped_samples
       %dt Genotyped samples
       %dd= samples.list_link :length, "Genotyped samples in #{ entity }"
 

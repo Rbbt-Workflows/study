@@ -34,7 +34,7 @@
   - all_matches.each do |study,matches|
     - next if matches.nil? or matches.empty?
     - study = Study.setup(study.dup)
-    - num_samples = study.samples.select_by(:has_genotype?).length
+    - num_samples = study.genotyped_samples.length
     - overlapping = matches.source_entity.uniq
     - affected = matches.select_by(:info){|info| info["affected"] == "true" }.source_entity.uniq
     - damaged = matches.select_by(:info){|info| info["damaged"] == "true" }.source_entity.uniq

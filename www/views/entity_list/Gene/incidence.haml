@@ -15,7 +15,7 @@
   - TSV.traverse studies do |study|
     - Study.setup(study)
     - next unless study.has_genotypes?
-    - log study
+    - log :pvalues, study
     - kb = study.knowledge_base
     - all_matches[study.to_s] = kb.subset(:sample_genes, :target => list, :source => :all)
     - pvalues[study.to_s] = begin
@@ -25,9 +25,10 @@
   - fields = %w(Overlapping Affected Damaged Miss-spliced Broken Significant)
   - tsv = TSV.setup({}, :key_field => "Study", :fields => fields, :type => :double)
   - all_matches.each do |study,matches|
+    - log :matches, study
     - next if matches.nil? or matches.empty?
     - study = Study.setup(study.dup)
-    - num_samples = study.samples.select_by(:has_genotype?).length
+    - num_samples = study.genotyped_samples.length
     - overlapping = matches.source_entity.uniq
     - affected = matches.select_by(:info){|info| info["affected"] == "true" }.source_entity.uniq
     - damaged = matches.select_by(:info){|info| info["damaged"] == "true" }.source_entity.uniq

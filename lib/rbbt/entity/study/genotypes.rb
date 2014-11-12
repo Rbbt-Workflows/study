@@ -19,8 +19,7 @@ module Study
   end
 
   def cohort
-    @cohort ||= samples.collect do |sample| 
-      next unless sample.has_genotype?
+    @cohort ||= genotyped_samples.collect do |sample| 
       genomic_mutations = sample.genomic_mutations
       GenomicMutation.setup(genomic_mutations, sample, organism, watson)
     end.compact

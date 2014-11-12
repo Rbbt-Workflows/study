@@ -27,14 +27,17 @@ module Study
 
                                     if self.has_genotypes?
                                       job = self.job(:mutation_info)
-                                      tsv = job.run
+                                      job.run(true)
 
-                                      fields = tsv.fields - ["Sample"]
+                                      fields = TSV.parse_header(job.path).fields - ["Sample"]
                                       knowledge_base.register :mutation_info, job.path, :source => "Genomic Mutation", :target => "Ensembl Gene ID", :fields => fields, :merge => true
 
                                       knowledge_base.register :sample_mutations, job.path, :source => "Sample", :target => "Genomic Mutation", :merge => true
 
-                                      knowledge_base.register :sample_genes, self.job(:sample_genes).run(true).join.path
+                                      job = self.job(:sample_genes)
+                                      job.run(true)
+                                      
+                                      knowledge_base.register :sample_genes, job.path
                                     end
 
 
@@ -86,6 +89,8 @@ require 'rbbt/entity/study/genotypes'
 
 if defined? Sample and Entity === Sample
   module Sample
+    self.format = ["submitted_specimen_id", "submitted_sample_id", "icgc_specimen_id", "icgc_donor_id"]
+
     property :study => :both do
       Study.setup(cohort)
     end

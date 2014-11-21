@@ -60,7 +60,7 @@ module Study
 
     fields = TSV.parse_header(step(:mutation_info).join.path).fields - ["Sample"]
     mutation_info = step(:mutation_info).join.path.tsv(:fields => fields, :unnamed => true)
-    sample_mutations = step(:mutation_info).join.path.tsv(:key_field => "Sample", :fields => ["Genomic Mutation"], :merge => true, :unnamed => true, :type => :double).to_flat
+    sample_mutations = step(:mutation_info).join.path.tsv(:key_field => "Sample", :fields => ["Genomic Mutation"], :merge => true, :zipped => true, :unnamed => true, :type => :double).to_flat
 
     fields << "missing?"
     fields << "missing"

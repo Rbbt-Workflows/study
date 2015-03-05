@@ -25,6 +25,7 @@ end
 require 'study/tasks/genotypes'
 Workflow.require_workflow "MutationSignatures"
 require 'study/tasks/mutation_signatures'
+require 'study/tasks/expression'
 
 module Study
   extend Entity 

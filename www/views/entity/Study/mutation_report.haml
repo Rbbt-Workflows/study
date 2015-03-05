@@ -17,7 +17,12 @@
 
     - Study.setup(study)
 
+    
+    - index = study.knowledge_base.get_index(:sample_mutations)
+    - Log.tsv index
+    - iii index["51106212~12:54423561:A"]
     - matches = study.knowledge_base.subset(:sample_mutations, :target => [mutation], :source => :all)
+
     - tsv = matches.tsv
 
     %h3 Mutation overview 
@@ -25,5 +30,4 @@
       %dt Samples (#{study.samples.select_by(:has_genotype?).length})
       %dd= matches.source_entity.uniq.list_link :length, "Samples with mutation #{ name } in #{ study }"
 
-    = table :row_ids => :consume do
-      - tsv
+    = association_table tsv

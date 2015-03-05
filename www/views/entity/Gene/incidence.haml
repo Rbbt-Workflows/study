@@ -12,13 +12,14 @@
   - all_matches = {}
   - pvalues = {}
   - Study.setup studies
+  - log "Bootstrapping studies"
   - Misc.bootstrap(studies) do |study|
     - Study.setup(study)
     - next unless study.has_genotypes?
     - study.knowledge_base
     - study.job(:binomial_significance).run(true)
 
-  - TSV.traverse studies do |study|
+  - TSV.traverse studies, :bar => @step.progress_bar('Processing studies') do |study|
     - Study.setup(study)
     - next unless study.has_genotypes?
     - log study

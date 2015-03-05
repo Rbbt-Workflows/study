@@ -7,12 +7,15 @@ Study=/$PWD filter="*.rb *.R *.js *.sass *.haml *.tsv" {
   study.rb
   tasks=study/tasks{
    genotypes.rb
+   expression.rb
+   pancancer.rb
   }
 
   entity=rbbt/entity{
    study.rb
    study=study{
     genotypes.rb
+    expression.rb
     cnv.rb
     snp.rb
     methylation.rb

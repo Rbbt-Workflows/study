@@ -15,6 +15,18 @@ module Study
     obj
   end
 
+  def matrices(*args)
+    Study.matrices(self)
+  end
+
+  def matrix(*args)
+    Study.matrix(self, *args)
+  end
+
+  def match_samples(list)
+    sample_info.index(:target => "Sample").values_at *list
+  end
+
   def knowledge_base
     @@knowledge_bases ||= {}
     @knowledge_base ||= 
@@ -32,7 +44,22 @@ module Study
                                       fields = TSV.parse_header(job.path).fields - ["Sample"]
                                       knowledge_base.register :mutation_info, job.path, :source => "Genomic Mutation", :target => "Ensembl Gene ID", :fields => fields, :merge => true
 
-                                      knowledge_base.register :sample_mutations, job.path, :source => "Sample", :target => "Genomic Mutation", :merge => true
+                                      #knowledge_base.register :sample_mutations, job.path, :source => "Sample", :target => "Genomic Mutation", :merge => true
+                                      knowledge_base.register :sample_mutations do
+                                        job = self.job(:mutation_info)
+                                        tsv = job.load
+                                        new = tsv.annotate({})
+                                        tsv.through do |mutation,values|
+                                          values = values.dup
+                                          samples = values.pop
+                                          samples.each do |sample|
+                                            new.zip_new sample, [mutation] + values.collect{|v| v * ";;"}
+                                          end
+                                        end
+                                        new.key_field = "Sample"
+                                        new.fields = ["Genomic Mutation"] + new.fields - ["Sample"]
+                                        new
+                                      end
 
                                       job = self.job(:sample_genes)
                                       job.run(true)

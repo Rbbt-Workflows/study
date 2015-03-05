@@ -61,3 +61,6 @@
     = table :row_ids => :consume do
       - tsv
 
+    = table do
+      - tsv.to_double.reorder "Ensembl Gene ID", tsv.fields - ["Ensembl Gene ID"]
+

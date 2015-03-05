@@ -1,3 +1,6 @@
+require 'rbbt/matrix'
+require 'rbbt/matrix/differential'
+
 Workflow.require_workflow "Sample"
 
 module Study
@@ -36,11 +39,15 @@ module Study
     path.genotypes.glob("*").collect{|f| File.basename f }
   end
 
+  def self.sample_info_file(study)
+    find_study(study).samples
+  end
+
   def self.sample_info(study)
-    path = find_study(study)
+    path = sample_info_file(study)
     organism = study_info(study)[:organism]
 
-    return path.samples.tsv :namespace => organism if path.samples.exists?
+    return path.tsv :namespace => organism if path.exists?
     samples = genotyped_samples(study)
     tsv = TSV.setup(samples, :key_field => "Sample", :fields => [], :type => :list, :namespace => organism)
     tsv.entity_options = {:cohort => study, :organism => organism}
@@ -53,6 +60,22 @@ module Study
 
   def self.samples(study)
     sample_info(study).keys
+  end
+
+  def self.matrices(study)
+    path = find_study(study)
+    path.matrices.glob("*").collect{|f| File.basename(f)}
+  end
+
+  def self.matrix_file(study, matrix)
+    path = find_study(study)
+    path.matrices[matrix.to_s].data
+  end
+
+  def self.matrix(study, matrix, format = "Ensembl Gene ID")
+    file = matrix_file(study, matrix)
+    sample_info = sample_info_file(study)
+    Matrix.new file.find, sample_info, :counts, format
   end
 
   def self.studies

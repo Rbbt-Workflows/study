@@ -12,6 +12,7 @@
     Select a study to see how this gene is affected in its samples
 
 = action_card_render action_card do
+  %hr.ui.divider
   - Study.setup(study)
   = fragment study.action_link("gene_report", "#{ entity.name || entity } in #{ study }", :gene => entity.ensembl, :_ => rand)
 

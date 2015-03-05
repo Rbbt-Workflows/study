@@ -12,7 +12,7 @@
   - pvalues = {}
   - Study.setup studies
 
-  - TSV.traverse studies do |study|
+  - TSV.traverse studies, :bar => @step.progress_bar('Processing studies') do |study|
     - Study.setup(study)
     - next unless study.has_genotypes?
     - log :pvalues, study

@@ -11,6 +11,7 @@
     Select a study to see samples with this mutation
 
 = action_card_render action_card do
+  %hr.ui.divider
   - Study.setup(study)
   = fragment study.action_link("mutation_report", "#{ entity } in #{ study }", :mutation => entity, :_ => rand)
 

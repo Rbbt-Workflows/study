@@ -5,18 +5,21 @@ module Study
     Study.organism(study)
   end
 
+  dep do |jobname, task|
+    study = Study.setup(jobname.dup)
+    study.genotyped_samples.collect{|sample| sample.genomic_mutations(:job)}
+  end
   task :metagenotype => :array do
-    study.genotyped_samples.collect{|sample|
-      begin
-        sample = [study, sample] * ":" unless sample.include? study
-        Sample.mutations(sample).read.split("\n")
-      rescue Exception
-        []
-      end
-    }.flatten
+    TSV.traverse dependencies, :into => :stream do |dep|
+      dep.path.read.strip
+    end
   end
 
 
+  dep do |jobname, task|
+    study = Study.setup(jobname.dup)
+    study.genotyped_samples.collect{|sample| sample.mutation_genes(:job)}
+  end
   task :mutation_info => :tsv do
     tsv = nil
     
@@ -44,6 +47,7 @@ module Study
         res << Misc.zip_fields(lvalues).collect{|values| ([mutation] + values) * "\t"}
       end
 
+      next if res.empty?
       res * "\n"
     end
 
@@ -52,6 +56,7 @@ module Study
     raise "No mutations" if tsv.nil?
 
     TSV.traverse sorted, :type => :array do |line|
+      next if line.empty?
       mut, *values = line.split("\t")
       _v = values.collect{|v| v.split("|")}
       tsv.zip_new mut, _v

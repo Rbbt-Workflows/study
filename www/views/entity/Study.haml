@@ -67,7 +67,8 @@
 
               %tr
                 %td Damaging Mutations (incl. splicing)
-                %td= metagenotype.select{|m| mutation_info[m] and mutation_info[m]["broken"].collect{|v| v.to_s == "true" }.any? }.list_link :length, "Damaging mutations in #{ entity }"
+                - broken_pos = mutation_info.identify_field "broken"
+                %td= metagenotype.select{|m| mutation_info[m] and mutation_info[m][broken_pos].collect{|v| v.to_s == "true" }.any? }.list_link :length, "Damaging mutations in #{ entity }"
 
               %tr
                 %td Recurrent Mutations

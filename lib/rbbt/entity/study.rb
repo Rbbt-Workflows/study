@@ -39,7 +39,8 @@ module Study
 
                                     if self.has_genotypes?
                                       job = self.job(:mutation_info)
-                                      job.run(true)
+                                      Step.wait_for_jobs job.run(true) unless job.done?
+
 
                                       fields = TSV.parse_header(job.path).fields - ["Sample"]
                                       knowledge_base.register :mutation_info, job.path, :source => "Genomic Mutation", :target => "Ensembl Gene ID", :fields => fields, :merge => true
@@ -62,7 +63,7 @@ module Study
                                       end
 
                                       job = self.job(:sample_genes)
-                                      job.run(true)
+                                      Step.wait_for_jobs job.run(true) unless job.done?
                                       
                                       knowledge_base.register :sample_genes, job.path
                                     end

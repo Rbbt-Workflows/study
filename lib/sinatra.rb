@@ -14,8 +14,11 @@ helpers do
   end
 end
 
-Study.studies.each do |study|
-  Log.medium("Registering knowledge base for Study #{ study }")
+Misc.bootstrap(Study.studies) do |study|
+  Study.setup(study).knowledge_base
+end
+
+TSV.traverse Study.studies, :bar => "Registering study KBs" do |study|
   KnowledgeBaseRESTHelpers.add_syndication study, Study.setup(study).knowledge_base
 end
 

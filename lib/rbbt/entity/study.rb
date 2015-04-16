@@ -38,14 +38,20 @@ module Study
                                     knowledge_base.entity_options["GenomicMutation"] = {:watson => watson }
 
                                     if self.has_genotypes?
-                                      job = self.job(:mutation_info)
-                                      Step.wait_for_jobs job.run(true) unless job.done?
+                                      #job = self.job(:mutation_info)
+                                      #Step.wait_for_jobs job.run(true) unless job.done?
 
 
-                                      fields = TSV.parse_header(job.path).fields - ["Sample"]
-                                      knowledge_base.register :mutation_info, job.path, :source => "Genomic Mutation", :target => "Ensembl Gene ID", :fields => fields, :merge => true
+                                      #fields = TSV.parse_header(job.path).fields - ["Sample"]
+                                      #knowledge_base.register :mutation_info, job.path, :source => "Genomic Mutation", :target => "Ensembl Gene ID", :fields => fields, :merge => true
+                                      #
+                                      knowledge_base.register :mutation_info do
+                                        job = self.job(:mutation_info)
+                                        Step.wait_for_jobs job.run(true) unless job.done?
+                                        fields = TSV.parse_header(job.path).fields - ["Ensembl Gene ID"]
+                                        TSV.open job.path, :key_field => "Genomic Mutation", :fields => ["Ensembl Gene ID"] + fields
+                                      end
 
-                                      #knowledge_base.register :sample_mutations, job.path, :source => "Sample", :target => "Genomic Mutation", :merge => true
                                       knowledge_base.register :sample_mutations do
                                         job = self.job(:mutation_info)
                                         tsv = job.load
@@ -62,10 +68,15 @@ module Study
                                         new
                                       end
 
-                                      job = self.job(:sample_genes)
-                                      Step.wait_for_jobs job.run(true) unless job.done?
-                                      
-                                      knowledge_base.register :sample_genes, job.path
+                                      #job = self.job(:sample_genes)
+                                      #Step.wait_for_jobs job.run(true) unless job.done?
+                                      #
+                                      #knowledge_base.register :sample_genes, job.path
+                                      knowledge_base.register :sample_genes do
+                                        job = self.job(:sample_genes)
+                                        Step.wait_for_jobs job.run(true) unless job.done?
+                                        job.load
+                                      end
                                     end
 
 

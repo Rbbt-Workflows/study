@@ -1,10 +1,6 @@
 require 'study/tasks/pancancer'
 module Study
 
-  task :organism => :string do
-    Study.organism(study)
-  end
-
   dep do |jobname, task|
     study = Study.setup(jobname.dup)
     study.genotyped_samples.collect{|sample| sample.genomic_mutations(:job)}
@@ -15,9 +11,12 @@ module Study
     end
   end
 
-
   dep do |jobname, task|
     study = Study.setup(jobname.dup)
+    Misc.bootstrap(study.genotyped_samples, 20) do |sample|
+      job = Sample.setup(sample, :cohort => jobname).mutation_genes(:job)
+      job.run(true).join unless job.done? and not job.dirty?
+    end
     study.genotyped_samples.collect{|sample| sample.mutation_genes(:job)}
   end
   task :mutation_info => :tsv do
@@ -25,10 +24,6 @@ module Study
     
     genotyped_samples = study.genotyped_samples
     raise "No genotyped samples" if genotyped_samples.empty?
-
-    #Misc.bootstrap genotyped_samples do |sample|
-    #  tsv = sample.mutation_genes
-    #end
 
     tsv = genotyped_samples.first.mutation_genes.annotate({})
     tsv.type = :double
@@ -38,9 +33,10 @@ module Study
     sample_mutations = {}
     io = TSV.traverse genotyped_samples, :type => :array, :bar => "Mutation info", :into => :stream do |sample|
       sample_mutation_info_job = sample.mutation_genes(:job)
+      sample_mutation_info_job.run(true).join
       sample_mutation_info = sample_mutation_info_job.path.tsv :fields => good_fields, :unnamed => true, :type => :double
       mutations = sample.genomic_mutations
-      sample_mutations[sample] = Set.new mutations
+      sample_mutations[sample] = Set.new Annotated.purge(mutations)
 
       res = []
       sample_mutation_info.each do |mutation,lvalues|
@@ -55,11 +51,11 @@ module Study
 
     raise "No mutations" if tsv.nil?
 
-    TSV.traverse sorted, :type => :array do |line|
+    TSV.traverse sorted, :type => :array, :bar => "Adding to TSV", :into => tsv do |line|
       next if line.empty?
       mut, *values = line.split("\t")
       _v = values.collect{|v| v.split("|")}
-      tsv.zip_new mut, _v
+      [mut, _v]
     end
 
     tsv.with_monitor do
@@ -71,41 +67,9 @@ module Study
     tsv
   end
 
-  task :mutation_info_old => :tsv do
-    tsv = nil
-    
-    sample_mutations = {}
-    genotyped_samples = study.genotyped_samples[0..50]
-    raise "No genotyped samples" if genotyped_samples.empty?
-
-    Misc.bootstrap genotyped_samples do |sample|
-      sample.mutation_genes
-    end
-
-    TSV.traverse genotyped_samples, :type => :array, :bar => true do |sample|
-      sample_mutation_info = sample.mutation_genes
-      sample_mutation_info.unnamed = true
-      sample_mutations[sample] = Set.new sample.mutation_details.keys
-      good_fields = sample_mutation_info.fields - ["missing"]
-      if tsv.nil?
-        tsv = sample_mutation_info.slice(good_fields)
-      else
-        tsv.merge! sample_mutation_info.slice(good_fields)
-      end
-    end
-
-    raise "No mutations" if tsv.nil?
-
-    tsv.add_field "Sample" do |mutation, info|
-      sample_mutations.select{|sample,mutations| mutations.include? mutation }.collect{|sample, mutations| sample }
-    end 
-
-    tsv
-  end
-
   dep :mutation_info
   task :mutation_samples => :tsv do
-    step(:mutation_info).join.path.tsv :fields => ["Sample"], :type => :flat
+    step(:mutation_info).join.path.tsv :fields => ["Sample"], :type => :flat, :unnamed => true
   end
 
   dep :mutation_info
@@ -127,7 +91,9 @@ module Study
 
     TSV.traverse genotyped_samples, :into => :dumper, 
       :key_field => "Sample", :fields => fields, :namespace => organism, :type => :double,
-      :cpus => [genotyped_samples.length / 10, 5].min, :respawn => 1.8, :bar => "Sample genes for study" do |sample|
+      :bar => self.progress_bar("Sample genes for study") do |sample|
+
+      log study
       Sample.setup sample, study
 
       mutations = broken = surely_broken = mutation_values_list = nil
@@ -142,8 +108,9 @@ module Study
       gene_mutations = {}
       values = nil
       
-      log :gene_mutations, "Compute gene_mutation info for #{ sample }" do
+      log :gene_mutations, "Compute gene_mutation info for #{ sample }: #{mutation_values_list.length}" do
         mutation_values_list.each do |mutation_values|
+          iii 1.1
           Misc.zip_fields(mutation_values).each do |_v|
             gene, *values = _v
             gene_mutations[gene] ||= []
@@ -187,4 +154,35 @@ module Study
     TSV.get_stream step(:sample_pathway_enrichment)
   end
 
+  #task :mutation_info_old => :tsv do
+  #  tsv = nil
+  #  
+  #  sample_mutations = {}
+  #  genotyped_samples = study.genotyped_samples[0..50]
+  #  raise "No genotyped samples" if genotyped_samples.empty?
+
+  #  Misc.bootstrap genotyped_samples do |sample|
+  #    sample.mutation_genes
+  #  end
+
+  #  TSV.traverse genotyped_samples, :type => :array, :bar => true do |sample|
+  #    sample_mutation_info = sample.mutation_genes
+  #    sample_mutation_info.unnamed = true
+  #    sample_mutations[sample] = Set.new sample.mutation_details.keys
+  #    good_fields = sample_mutation_info.fields - ["missing"]
+  #    if tsv.nil?
+  #      tsv = sample_mutation_info.slice(good_fields)
+  #    else
+  #      tsv.merge! sample_mutation_info.slice(good_fields)
+  #    end
+  #  end
+
+  #  raise "No mutations" if tsv.nil?
+
+  #  tsv.add_field "Sample" do |mutation, info|
+  #    sample_mutations.select{|sample,mutations| mutations.include? mutation }.collect{|sample, mutations| sample }
+  #  end 
+
+  #  tsv
+  #end
 end

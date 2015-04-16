@@ -22,7 +22,9 @@ module Study
   end
 end
 
+require 'study/tasks/samples'
 require 'study/tasks/genotypes'
+require 'study/tasks/cnv'
 Workflow.require_workflow "MutationSignatures"
 require 'study/tasks/mutation_signatures'
 require 'study/tasks/expression'

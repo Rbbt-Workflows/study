@@ -36,6 +36,8 @@ module Study
 
   def self.genotyped_samples(study)
     path = find_study(study)
+    samples = path.genotypes.vcf.glob("*").collect{|f| File.basename(f).sub(/\.vcf.*/,'') }
+    return samples if samples.any?
     path.genotypes.glob("*").collect{|f| File.basename f }
   end
 

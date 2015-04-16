@@ -35,6 +35,8 @@ Misc.bootstrap studies, $cpus.to_i / 2, :respawn => :always do |study|
   Study.setup(study)
 
   Misc.bootstrap study.genotyped_samples, $cpus.to_i / 2 do |sample|
+    sample.genomic_mutation_annotations
+    sample.mutation_mi_annotations
     sample.mutation_details
   end
 

@@ -6,7 +6,9 @@ Study=/$PWD filter="*.rb *.R *.js *.sass *.haml *.tsv" {
 
   study.rb
   tasks=study/tasks{
+   samples.rb
    genotypes.rb
+   cnv.rb
    expression.rb
    pancancer.rb
   }

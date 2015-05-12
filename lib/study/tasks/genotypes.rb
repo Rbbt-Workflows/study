@@ -13,6 +13,34 @@ module Study
 
   dep do |jobname, task|
     study = Study.setup(jobname.dup)
+    study.genotyped_samples.collect{|sample| sample.genomic_mutations(:job)}
+  end
+  task :mutation_incidence => :tsv do
+    
+    size = Math.sqrt(dependencies.length).to_i + 1
+    chunks = Misc.ordered_divide(dependencies, size)
+    bar = self.progress_bar("Processing sample chunks", :max => chunks.length)
+    TSV.traverse (0..chunks.length-1).to_a, :cpus => 5 do |i|
+      bar.tick
+      dep_list = chunks[i]
+      streams = dep_list.collect do |dep|
+        sample = File.basename(dep.path).split(":").last
+        TSV.traverse CMD.cmd('sort', :in => dep.path.open, :pipe => true), :into => :stream, :type => :array, :bar => "Processing #{ sample }" do |mutation|
+          [mutation, sample] * "\t"
+        end
+      end
+
+      io = TSV.paste_streams(streams, :sort => false, :key_field => "Genomic Mutation", :fields => ["Sample"], :same_fields => true, :type => :double, :merge => true)
+      Misc.sensiblewrite(file('tmp-stream-' + i.to_s), io)
+    end
+
+    log :pasting, "Pasting sorted streams"
+    _tmp_streams = file('tmp-stream-*').glob.each{|f| f.open }
+    TSV.paste_streams(_tmp_streams, :sort => false, :same_fields => true, :type => :double, :filename => path)
+  end
+
+  dep do |jobname, task|
+    study = Study.setup(jobname.dup)
     Misc.bootstrap(study.genotyped_samples, 20) do |sample|
       job = Sample.setup(sample, :cohort => jobname).mutation_genes(:job)
       job.run(true).join unless job.done? and not job.dirty?
@@ -110,7 +138,6 @@ module Study
       
       log :gene_mutations, "Compute gene_mutation info for #{ sample }: #{mutation_values_list.length}" do
         mutation_values_list.each do |mutation_values|
-          iii 1.1
           Misc.zip_fields(mutation_values).each do |_v|
             gene, *values = _v
             gene_mutations[gene] ||= []
@@ -148,41 +175,10 @@ module Study
 
   Workflow.require_workflow "MutationEnrichment"
   dep :organism
-  dep :mutation_samples
-  dep MutationEnrichment, :sample_pathway_enrichment, :organism => :organism, :mutations => :mutation_samples 
+  dep :mutation_incidence
+  dep MutationEnrichment, :sample_pathway_enrichment, :organism => :organism, :mutations => :mutation_incidence
+  input :database, :string, "Database to use", nil, :select_options => MutationEnrichment::DATABASES
   task :sample_enrichment => :tsv do
     TSV.get_stream step(:sample_pathway_enrichment)
   end
-
-  #task :mutation_info_old => :tsv do
-  #  tsv = nil
-  #  
-  #  sample_mutations = {}
-  #  genotyped_samples = study.genotyped_samples[0..50]
-  #  raise "No genotyped samples" if genotyped_samples.empty?
-
-  #  Misc.bootstrap genotyped_samples do |sample|
-  #    sample.mutation_genes
-  #  end
-
-  #  TSV.traverse genotyped_samples, :type => :array, :bar => true do |sample|
-  #    sample_mutation_info = sample.mutation_genes
-  #    sample_mutation_info.unnamed = true
-  #    sample_mutations[sample] = Set.new sample.mutation_details.keys
-  #    good_fields = sample_mutation_info.fields - ["missing"]
-  #    if tsv.nil?
-  #      tsv = sample_mutation_info.slice(good_fields)
-  #    else
-  #      tsv.merge! sample_mutation_info.slice(good_fields)
-  #    end
-  #  end
-
-  #  raise "No mutations" if tsv.nil?
-
-  #  tsv.add_field "Sample" do |mutation, info|
-  #    sample_mutations.select{|sample,mutations| mutations.include? mutation }.collect{|sample, mutations| sample }
-  #  end 
-
-  #  tsv
-  #end
 end

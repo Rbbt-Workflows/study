@@ -1,5 +1,4 @@
 module Study
-
   dep do |jobname, task|
     study = Study.setup(jobname.dup)
     study.samples.collect{|sample| sample.gene_cnv_status(:job)}

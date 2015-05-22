@@ -11,6 +11,12 @@ Study=/$PWD filter="*.rb *.R *.js *.sass *.haml *.tsv" {
    cnv.rb
    expression.rb
    pancancer.rb
+
+   snv.rb
+   snv=snv{
+    common.rb
+    cohort.rb
+   }
   }
 
   entity=rbbt/entity{

@@ -14,7 +14,7 @@ helpers do
   end
 end
 
-Misc.bootstrap(Study.studies) do |study|
+Misc.bootstrap(Study.studies, 3) do |study|
   Study.setup(study).knowledge_base
 end
 

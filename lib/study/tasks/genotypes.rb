@@ -11,39 +11,13 @@ module Study
     end
   end
 
-  dep do |jobname, task|
-    study = Study.setup(jobname.dup)
-    study.genotyped_samples.collect{|sample| sample.genomic_mutations(:job)}
-  end
-  task :mutation_incidence => :tsv do
-    
-    size = Math.sqrt(dependencies.length).to_i + 1
-    chunks = Misc.ordered_divide(dependencies, size)
-    bar = self.progress_bar("Processing sample chunks", :max => chunks.length)
-    TSV.traverse (0..chunks.length-1).to_a, :cpus => 5 do |i|
-      bar.tick
-      dep_list = chunks[i]
-      streams = dep_list.collect do |dep|
-        sample = File.basename(dep.path).split(":").last
-        TSV.traverse CMD.cmd('sort', :in => dep.path.open, :pipe => true), :into => :stream, :type => :array, :bar => "Processing #{ sample }" do |mutation|
-          [mutation, sample] * "\t"
-        end
-      end
-
-      io = TSV.paste_streams(streams, :sort => false, :key_field => "Genomic Mutation", :fields => ["Sample"], :same_fields => true, :type => :double, :merge => true)
-      Misc.sensiblewrite(file('tmp-stream-' + i.to_s), io)
-    end
-
-    log :pasting, "Pasting sorted streams"
-    _tmp_streams = file('tmp-stream-*').glob.each{|f| f.open }
-    TSV.paste_streams(_tmp_streams, :sort => false, :same_fields => true, :type => :double, :filename => path)
-  end
 
   dep do |jobname, task|
     study = Study.setup(jobname.dup)
-    Misc.bootstrap(study.genotyped_samples, 20) do |sample|
+    Misc.bootstrap(study.genotyped_samples, 20, :bar => "Boostrapping genotyped samples") do |sample|
       job = Sample.setup(sample, :cohort => jobname).mutation_genes(:job)
-      job.run(true).join unless job.done? and not job.dirty?
+      job.run(true) unless job.done? and not job.dirty? and not job.started?
+      job.join unless job.done? 
     end
     study.genotyped_samples.collect{|sample| sample.mutation_genes(:job)}
   end
@@ -102,15 +76,17 @@ module Study
 
   dep :mutation_info
   task :sample_genes => :tsv do
+    mutation_info_job = step(:mutation_info)
+    Step.wait_for_jobs mutation_info_job
+
     # ToDo: Check when Sample is in list of fields
-    
-    fields = TSV.parse_header(step(:mutation_info).join.path).fields - ["Sample"]
+    fields = TSV.parse_header(mutation_info_job.path).fields - ["Sample"]
 
     log :loading, "Loading sample mutations for #{ study }"
-    sample_mutations = step(:mutation_info).join.path.tsv(:key_field => "Sample", :fields => ["Genomic Mutation"], :merge => true, :zipped => true, :unnamed => true, :type => :double, :monitor => true).to_flat
+    sample_mutations = mutation_info_job.path.tsv(:key_field => "Sample", :fields => ["Genomic Mutation"], :merge => true, :zipped => true, :unnamed => true, :type => :double, :monitor => true).to_flat
 
     log :loading, "Loading mutation info for #{ study }"
-    mutation_info = step(:mutation_info).join.path.tsv(:fields => fields, :unnamed => true, :monitor => true)
+    mutation_info = mutation_info_job.path.tsv(:fields => fields, :unnamed => true, :monitor => true)
 
     fields << "missing?"
     fields << "missing"
@@ -119,9 +95,9 @@ module Study
 
     TSV.traverse genotyped_samples, :into => :dumper, 
       :key_field => "Sample", :fields => fields, :namespace => organism, :type => :double,
-      :bar => self.progress_bar("Sample genes for study") do |sample|
+      :bar => self.progress_bar("Sample genes for #{ study }") do |sample|
 
-      log study
+      log [study, sample] * ": "
       Sample.setup sample, study
 
       mutations = broken = surely_broken = mutation_values_list = nil
@@ -166,19 +142,20 @@ module Study
     end
   end
 
-  dep :organism
-  dep :metagenotype
-  dep Sequence, :binomial_significance, :organism => :organism, :mutations => :metagenotype 
-  task :binomial_significance => :tsv do
-    TSV.get_stream step(:binomial_significance)
-  end
+  #dep :organism
+  #dep :metagenotype
+  #dep :exome
+  #dep Sequence, :binomial_significance, :organism => :organism, :mutations => :metagenotype, :exome => :exome
+  #task :binomial_significance => :tsv do
+  #  TSV.get_stream step(:binomial_significance)
+  #end
 
-  Workflow.require_workflow "MutationEnrichment"
-  dep :organism
-  dep :mutation_incidence
-  dep MutationEnrichment, :sample_pathway_enrichment, :organism => :organism, :mutations => :mutation_incidence
-  input :database, :string, "Database to use", nil, :select_options => MutationEnrichment::DATABASES
-  task :sample_enrichment => :tsv do
-    TSV.get_stream step(:sample_pathway_enrichment)
-  end
+  #Workflow.require_workflow "MutationEnrichment"
+  #dep :organism
+  #dep :mutation_incidence
+  #dep MutationEnrichment, :sample_pathway_enrichment, :organism => :organism, :mutations => :mutation_incidence
+  #input :database, :string, "Database to use", nil, :select_options => MutationEnrichment::DATABASES
+  #task :sample_enrichment => :tsv do
+  #  TSV.get_stream step(:sample_pathway_enrichment)
+  #end
 end

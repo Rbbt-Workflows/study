@@ -46,34 +46,37 @@
       by mutations in at least two samples
 
   - if entity.has_genotypes?
+    - entity.mutation_info
+    - entity.sample_genes
     .row
-      - mutation_info = study.mutation_info
-      - metagenotype = study.metagenotype
-      - relevant = metagenotype.select{|m| mutation_info[m] and mutation_info[m].flatten.include?("true") }
 
       .mutations.responsive_column
         %h3 Mutations
         = fragment do
+          - mutation_info = study.mutation_info
+          - all = study.knowledge_base.all(:mutation_info)
+          - metagenotype = study.genomic_mutations
+          - relevant = all.filter("affected" => 'true').source_entity.uniq
+          - broken = all.filter("broken" => 'true').source_entity.uniq
+
           %table.ui.collapsing.table
             %tbody
 
               %tr
-                %td All Mutations
+                %td All (uniq) Mutations
                 %td= metagenotype.list_link :length, "All mutations in #{ entity }"
           
               %tr
-                %td Relevant Mutations
+                %td Relevant (uniq) Mutations
                 %td= relevant.list_link :length, "Relevant mutations in #{ entity }"
 
               %tr
-                %td Damaging Mutations (incl. splicing)
-                - broken_pos = mutation_info.identify_field "broken"
-                %td= metagenotype.select{|m| mutation_info[m] and mutation_info[m][broken_pos].collect{|v| v.to_s == "true" }.any? }.list_link :length, "Damaging mutations in #{ entity }"
+                %td Damaging (uniq) Mutations, incl. splicing 
+                %td= broken.list_link :length, "Damaging mutations in #{ entity }"
 
               %tr
                 %td Recurrent Mutations
-                - recurrent = Misc.counts(metagenotype).select{|m,c| c > 1 }.collect{|m,c| m }
-                - metagenotype.annotate recurrent
+                - recurrent = study.recurrent_mutations
                 - recurrent.extend AnnotatedArray
                 %td= recurrent.list_link :length, "Recurrent mutations in #{ entity }"
 
@@ -93,17 +96,17 @@
 
               %tr
                 %td Damaged genes
-                %td= entity.get_genes(:damaged).list_link :length, "Damaged genes in #{ entity }"
+                %td= entity.get_genes(:damaged_mutated_isoform).list_link :length, "Damaged genes in #{ entity }"
 
               %tr
                 %td Broken genes 
                 %td= entity.get_genes(:broken).list_link :length, "Broken genes in #{ entity }"
 
-              %tr
+              -#%tr
                 %td Missing genes
                 %td= entity.get_genes(:missing?).list_link :length, "Missing genes in #{ entity }"
 
-              %tr
+              -#%tr
                 %td Surely missing genes
                 %td= entity.get_genes(:missing).list_link :length, "Surely missing genes in #{ entity }"
 
@@ -113,15 +116,21 @@
 
     .row
       .gene_samples
-        %h3 Gene status per sample
-        = table :row_ids => :consume do
-          - matches = study.knowledge_base.subset(:sample_genes, :all)
-          - matches.tsv
+        %h3 Gene status by sample
+        = fragment do
+          = table :row_ids => :consume do
+            - matches = study.knowledge_base.subset(:sample_genes, :all)
+            - matches.tsv
 
     %hr.ui.divider
     .row
       .mutation_details
-        = fragment relevant.list_action_link :mutation_details, nil, "Relevant mutations in #{entity}"
+        = fragment do
+          - mutation_info = study.mutation_info
+          - metagenotype = study.genomic_mutations
+          - all = study.knowledge_base.all(:mutation_info)
+          - relevant = all.filter("affected" => 'true').source_entity
+          = fragment relevant.list_action_link :mutation_details, nil, "Relevant mutations in #{entity}"
 
 
 - entity_card.action_controller = default_action_controller entity

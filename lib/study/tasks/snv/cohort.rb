@@ -62,7 +62,6 @@ CohortTasks = Proc.new do
     header = TSV.header_lines(parser.key_field, parser.fields, parser.options)
 
     io = Misc.open_pipe do |sin|
-      sin.puts header
 
       TSV.traverse dependencies, :type => :array do |job|
         sample = job.clean_name.split(":").last
@@ -73,7 +72,7 @@ CohortTasks = Proc.new do
       end
     end
 
-    CMD.cmd('sort -u', :in => io, :pipe => true)
+    Misc.sort_stream io
   end
 
   dep :organism

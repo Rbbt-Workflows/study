@@ -48,7 +48,7 @@ module Study
                                       #  TSV.open job.path, :key_field => "Genomic Mutation", :fields => ["Ensembl Gene ID"] + fields
                                       #end
 
-                                      knowledge_base.register :mutation_info, self.job(:mutation_info), :source => "Genomic Mutation", :taget => "Ensembl Gene ID"
+                                      knowledge_base.register :mutation_info, nil, :source => "Genomic Mutation", :taget => "Ensembl Gene ID" do self.job(:mutation_info) end
 
                                       #knowledge_base.register :sample_mutations_old do
                                       #  job = self.job(:mutation_incidence)
@@ -57,7 +57,7 @@ module Study
                                       #  job.path.tsv :key_field => "Sample", :type => :flat
                                       #end
 
-                                      knowledge_base.register :sample_mutations, self.job(:mutation_incidence), :source => "Sample", :taget => "Genomic Mutation"
+                                      knowledge_base.register :sample_mutations, nil, :source => "Sample", :taget => "Genomic Mutation" do self.job(:mutation_incidence) end
 
                                       #knowledge_base.register :sample_genes_old do
                                       #  job = self.job(:sample_genes)
@@ -65,7 +65,7 @@ module Study
                                       #  Step.wait_for_jobs job unless job.done?
                                       #  job.path.tsv :key_field => "Sample", :merge => true
                                       #end
-                                      knowledge_base.register :sample_genes, self.job(:sample_genes), :source => "Sample", :target => "Gene"
+                                      knowledge_base.register :sample_genes, nil, :source => "Sample", :target => "Gene" do self.job(:sample_genes) end
                                     end
 
 

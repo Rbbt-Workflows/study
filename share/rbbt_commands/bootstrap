@@ -31,15 +31,16 @@ end
 
 $cpus ||= options[:cpus] || 3
 
-Misc.bootstrap studies, $cpus.to_i / 2, :respawn => :always do |study|
+Misc.bootstrap studies, $cpus, :respawn => :always do |study|
   Study.setup(study)
 
-  Misc.bootstrap study.genotyped_samples, $cpus.to_i / 2 do |sample|
-    sample.genomic_mutation_annotations
-    sample.mutation_mi_annotations
-    sample.mutation_details
-  end
+  #Misc.bootstrap study.genotyped_samples, $cpus.to_i / 2 do |sample|
+  #  sample.genomic_mutation_annotations
+  #  sample.mutation_mi_annotations
+  #  sample.mutation_details
+  #end
 
+  study.sample_genes
   study.binomial_significance
 
   study.knowledge_base.registry.keys.each do |database|
@@ -47,4 +48,10 @@ Misc.bootstrap studies, $cpus.to_i / 2, :respawn => :always do |study|
   end
 end
 
+
+Misc.bootstrap studies, 3, :respawn => :always do |study|
+  Study.setup(study)
+  study.genomic_mutation_annotations
+  study.mi_annotations
+end
 

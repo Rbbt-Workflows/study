@@ -5,7 +5,7 @@ CohortTasks = Proc.new do
     jobs = study.genotyped_samples.collect{|sample| Sample.setup(sample, :cohort => study); sample.gene_sample_mutation_status(:job) }.flatten
     Misc.bootstrap(jobs, nil, :bar => "Processing sample gene_mutation_status") do |job|
       job.clean if job.dirty?
-      job.run(true) unless job.done? or job.started? 
+      job.run(false) unless job.done? or job.started? 
       Step.wait_for_jobs job unless job.done?
     end
     jobs
@@ -77,10 +77,11 @@ CohortTasks = Proc.new do
   end
 
   dep :organism
-  dep :genomic_mutations
   dep :exome
+  dep :genomic_mutations
   dep Sequence, :binomial_significance, :organism => :organism, :mutations => :genomic_mutations, :exome => :exome
   task :binomial_significance => :tsv do
+    Step.wait_for_jobs dependencies
     TSV.get_stream step(:binomial_significance)
   end
 

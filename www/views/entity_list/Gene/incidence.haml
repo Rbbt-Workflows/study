@@ -12,12 +12,13 @@
   - pvalues = {}
   - Study.setup studies
 
-  - TSV.traverse studies, :bar => @step.progress_bar('Processing studies') do |study|
+  - Misc.bootstrap studies, 10, :respawn => :always, :bar => @step.progress_bar('Processing studies') do |study|
     - Study.setup(study)
     - next unless study.has_genotypes?
-    - log :pvalues, study
+    - log :knowledge_base, study + " Knowledge Base"
     - kb = study.knowledge_base
     - all_matches[study.to_s] = kb.subset(:sample_genes, :target => list, :source => :all)
+    - log :pvalues, study + " Binomial P-values"
     - pvalues[study.to_s] = begin
       - bs = study.binomial_significance
       - list.select{|g| bs.include?(g) and bs[g].last.to_f < 0.1 }

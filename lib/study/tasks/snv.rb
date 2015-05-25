@@ -48,15 +48,6 @@ module Study
       res
     end
   end
-  dep do |jobname, task|
-    study = Study.setup(jobname.dup)
-    jobs = study.genotyped_samples.collect{|sample| Sample.setup(sample, :cohort => study).mutation_genes(:job) }
-    Misc.bootstrap(jobs, 20, :bar => "Boostrapping jobs for genotyped samples") do |job|
-      job.run(true) unless job.done? and not job.dirty? and not job.started?
-      job.join unless job.done? 
-    end
-    jobs
-  end
 
 end
 

@@ -74,9 +74,10 @@ CohortTasks = Proc.new do
   task :recurrent_genes => :array do |recurrent_threshold|
     threshold_count = recurrent_threshold * step(:genotyped_samples).load.length
     TSV.traverse step(:sample_genes), :type => :array, :into => :stream do |line|
+      next if line =~ /^#/
       gene, samples, overlapping, affected = line.split("\t")
-      affected_samples = samples.zip(affected).collect{|d,a| a.to_s == 'true' ? d : nil}.compact
-      next if affected_samples >= threshold_count
+      affected_samples = samples.split("|").zip(affected.split("|")).collect{|d,a| a.to_s == 'true' ? d : nil}.compact
+      next unless affected_samples.length >= threshold_count
       gene
     end
   end

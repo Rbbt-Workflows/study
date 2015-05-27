@@ -34,9 +34,9 @@ SNVTasks = Proc.new do
     TSV.get_stream step(:annotate)
   end
 
-  dep :annotate_GERP
-  dep :annotate_Genomes1000
   dep :annotate_DbSNP
+  dep :annotate_Genomes1000
+  dep :annotate_GERP
   dep :annotate_EVS
   task :genomic_mutation_annotations => :tsv do
     TSV.paste_streams dependencies, :sort => true
@@ -63,6 +63,13 @@ SNVTasks = Proc.new do
   dep DbNSFP, :annotate, :mutations => :mi, :organism => :organism
   task :DbNSFP => :tsv do
     TSV.get_stream step(:annotate)
+  end
+
+  Workflow.require_workflow "KinMut_2"
+  dep :mi
+  dep KinMut2, :predict_fix, :mutations => :mi
+  task :kinmut => :tsv do
+    TSV.get_stream step(:predict_fix)
   end
 
   dep :DbNSFP

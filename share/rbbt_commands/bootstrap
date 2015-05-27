@@ -41,17 +41,62 @@ Misc.bootstrap studies, $cpus, :respawn => :always do |study|
   #end
 
   study.sample_genes
-  study.binomial_significance
 
   study.knowledge_base.registry.keys.each do |database|
     study.knowledge_base.get_index(database).reverse
   end
+  nil
+end
+
+Misc.bootstrap studies, $cpus, :respawn => :always do |study|
+  Study.setup(study)
+  study.firestar
+  study.kinmut
+  nil
+end
+
+
+Misc.bootstrap studies, $cpus/2, :respawn => :always do |study|
+
+  Misc.bootstrap Enrichment::DATABASES, 2, :respawn => :always do |database|
+    Study.setup(study)
+    next if database == 'interpro'
+    study.recurrent_gene_enrichment(true, :database => database)
+    #study.mutation_enrichment(true, :database => database)
+  end
+  nil
 end
 
 
 Misc.bootstrap studies, 3, :respawn => :always do |study|
   Study.setup(study)
-  study.genomic_mutation_annotations
-  study.mi_annotations
+  study.firestar_neighbours
+  nil
 end
 
+Misc.bootstrap studies, 3, :respawn => :always do |study|
+  Study.setup(study)
+  study.mi_annotations
+  study.genomic_mutation_annotations
+  nil
+end
+
+Misc.bootstrap studies, $cpus, :respawn => :always do |study|
+  Study.setup(study)
+  study.binomial_significance
+  Misc.bootstrap Enrichment::DATABASES, 2, :respawn => :always do |database|
+    study.significant_gene_enrichment(true, :database => database)
+  end
+  nil
+end
+
+Misc.bootstrap studies, $cpus/2, :respawn => :always do |study|
+
+  Misc.bootstrap Enrichment::DATABASES, 2, :respawn => :always do |database|
+    Study.setup(study)
+    next if database == 'interpro'
+    study.sample_enrichment(true, :database => database)
+    #study.mutation_enrichment(true, :database => database)
+  end
+  nil
+end

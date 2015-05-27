@@ -39,6 +39,7 @@ Misc.bootstrap studies, [$cpus, studies.length].min, :respawn => :always do |stu
   study.knowledge_base.registry.keys.each do |database|
     study.knowledge_base.get_index(database).reverse
   end
+  Log.warn "STUDY BOOTSTRAP - " + study
   nil
 end
 
@@ -47,6 +48,7 @@ Misc.bootstrap studies, [$cpus, studies.length].min, :respawn => :always do |stu
   Study.setup(study)
   study.firestar
   study.kinmut
+  Log.warn "STUDY BOOTSTRAP - " + study
   nil
 end
 
@@ -60,6 +62,7 @@ Misc.bootstrap studies, 2, :respawn => :always do |study|
     study.recurrent_gene_enrichment(true, :database => database)
     #study.mutation_enrichment(true, :database => database)
   end
+  Log.warn "STUDY BOOTSTRAP - " + study
   nil
 end
 
@@ -68,6 +71,7 @@ Log.warn "STUDY BOOTSTRAP - 4"
 Misc.bootstrap studies, 3, :respawn => :always do |study|
   Study.setup(study)
   study.firestar_neighbours
+  Log.warn "STUDY BOOTSTRAP - " + study
   nil
 end
 
@@ -76,6 +80,7 @@ Misc.bootstrap studies, 3, :respawn => :always do |study|
   Study.setup(study)
   study.mi_annotations
   study.genomic_mutation_annotations
+  Log.warn "STUDY BOOTSTRAP - " + study
   nil
 end
 
@@ -86,6 +91,7 @@ Misc.bootstrap studies, 2, :respawn => :always do |study|
   Misc.bootstrap Enrichment::DATABASES, 2, :respawn => :always do |database|
     study.significant_gene_enrichment(true, :database => database)
   end
+  Log.warn "STUDY BOOTSTRAP - " + study
   nil
 end
 
@@ -98,5 +104,6 @@ Misc.bootstrap studies, 2, :respawn => :always do |study|
     study.sample_enrichment(true, :database => database)
     #study.mutation_enrichment(true, :database => database)
   end
+  Log.warn "STUDY BOOTSTRAP - " + study
   nil
 end

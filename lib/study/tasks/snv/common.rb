@@ -67,9 +67,13 @@ SNVTasks = Proc.new do
 
   Workflow.require_workflow "KinMut_2"
   dep :mi
-  dep KinMut2, :predict_fix, :mutations => :mi
   task :kinmut => :tsv do
-    TSV.get_stream step(:predict_fix)
+    begin
+      KinMut2.job(:predict_fix, clean_name, :mutations => step(:mi).path).run
+    rescue Exception
+      Log.warn "KinMut error: " << $!.message
+      ""
+    end
   end
 
   dep :DbNSFP

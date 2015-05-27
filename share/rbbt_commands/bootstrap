@@ -81,7 +81,7 @@ Misc.bootstrap studies, 3, :respawn => :always do |study|
   nil
 end
 
-Misc.bootstrap studies, $cpus, :respawn => :always do |study|
+Misc.bootstrap studies, 2, :respawn => :always do |study|
   Study.setup(study)
   study.binomial_significance
   Misc.bootstrap Enrichment::DATABASES, 2, :respawn => :always do |database|
@@ -90,7 +90,7 @@ Misc.bootstrap studies, $cpus, :respawn => :always do |study|
   nil
 end
 
-Misc.bootstrap studies, $cpus/2, :respawn => :always do |study|
+Misc.bootstrap studies, 2, :respawn => :always do |study|
 
   Misc.bootstrap Enrichment::DATABASES, 2, :respawn => :always do |database|
     Study.setup(study)

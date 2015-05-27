@@ -31,24 +31,19 @@ end
 
 $cpus ||= options[:cpus] || 3
 
-Misc.bootstrap studies, $cpus, :respawn => :always do |study|
+Log.warn "STUDY BOOTSTRAP - 1"
+Misc.bootstrap studies, [$cpus, studies.length].min, :respawn => :always do |study|
   Study.setup(study)
 
-  #Misc.bootstrap study.genotyped_samples, $cpus.to_i / 2 do |sample|
-  #  sample.genomic_mutation_annotations
-  #  sample.mutation_mi_annotations
-  #  sample.mutation_details
-  #end
-
   study.sample_genes
-
   study.knowledge_base.registry.keys.each do |database|
     study.knowledge_base.get_index(database).reverse
   end
   nil
 end
 
-Misc.bootstrap studies, $cpus, :respawn => :always do |study|
+Log.warn "STUDY BOOTSTRAP - 2"
+Misc.bootstrap studies, [$cpus, studies.length].min, :respawn => :always do |study|
   Study.setup(study)
   study.firestar
   study.kinmut
@@ -56,7 +51,8 @@ Misc.bootstrap studies, $cpus, :respawn => :always do |study|
 end
 
 
-Misc.bootstrap studies, $cpus/2, :respawn => :always do |study|
+Log.warn "STUDY BOOTSTRAP - 3"
+Misc.bootstrap studies, 2, :respawn => :always do |study|
 
   Misc.bootstrap Enrichment::DATABASES, 2, :respawn => :always do |database|
     Study.setup(study)
@@ -68,12 +64,14 @@ Misc.bootstrap studies, $cpus/2, :respawn => :always do |study|
 end
 
 
+Log.warn "STUDY BOOTSTRAP - 4"
 Misc.bootstrap studies, 3, :respawn => :always do |study|
   Study.setup(study)
   study.firestar_neighbours
   nil
 end
 
+Log.warn "STUDY BOOTSTRAP - 5"
 Misc.bootstrap studies, 3, :respawn => :always do |study|
   Study.setup(study)
   study.mi_annotations
@@ -81,6 +79,7 @@ Misc.bootstrap studies, 3, :respawn => :always do |study|
   nil
 end
 
+Log.warn "STUDY BOOTSTRAP - 6"
 Misc.bootstrap studies, 2, :respawn => :always do |study|
   Study.setup(study)
   study.binomial_significance
@@ -90,6 +89,7 @@ Misc.bootstrap studies, 2, :respawn => :always do |study|
   nil
 end
 
+Log.warn "STUDY BOOTSTRAP - 7"
 Misc.bootstrap studies, 2, :respawn => :always do |study|
 
   Misc.bootstrap Enrichment::DATABASES, 2, :respawn => :always do |database|

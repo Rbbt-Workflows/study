@@ -8,6 +8,7 @@ CohortTasks = Proc.new do
       job.clean if job.dirty? or (job.started? and not job.running?)
       job.run(true) unless (job.done? or job.started?) 
       Step.wait_for_jobs job unless job.done?
+      nil
     end
     jobs
   end
@@ -40,6 +41,7 @@ CohortTasks = Proc.new do
       job.clean if job.dirty? or (job.started? and not job.running?)
       job.run(false) unless job.done? or job.started? 
       Step.wait_for_jobs job unless job.done?
+      nil
     end
     jobs
   end
@@ -94,7 +96,7 @@ CohortTasks = Proc.new do
 
   dep :organism
   dep :genomic_mutations
-  dep Sequence, :binomial_significance, :organism => :organism, :mutations => :genomic_mutations, :exome => false
+  dep Sequence, :binomial_significance, :organism => :organism, :mutations => :genomic_mutations, :exome => true
   task :binomial_significance => :tsv do
     Step.wait_for_jobs dependencies
     TSV.get_stream step(:binomial_significance)

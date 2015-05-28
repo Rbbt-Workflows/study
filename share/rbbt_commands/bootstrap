@@ -35,7 +35,12 @@ Log.warn "STUDY BOOTSTRAP - 1"
 Misc.bootstrap studies, [$cpus, studies.length].min, :respawn => :always do |study|
   Study.setup(study)
 
-  study.sample_genes
+  job = study.sample_genes(:job)
+  if not job.done?
+    job.run(true)
+    Step.wait_for_jobs job
+  end
+
   study.knowledge_base.registry.keys.each do |database|
     study.knowledge_base.get_index(database).reverse
   end
@@ -46,8 +51,18 @@ end
 Log.warn "STUDY BOOTSTRAP - 2"
 Misc.bootstrap studies, [$cpus, studies.length].min, :respawn => :always do |study|
   Study.setup(study)
-  study.firestar
-  study.kinmut
+  job = study.firestar(:job)
+  if not job.done?
+    job.run(true)
+    Step.wait_for_jobs job
+  end
+
+  job = study.kinmut(:job)
+  if not job.done?
+    job.run(true)
+    Step.wait_for_jobs job
+  end
+
   Log.warn "STUDY BOOTSTRAP - " + study
   nil
 end
@@ -59,7 +74,12 @@ Misc.bootstrap studies, 2, :respawn => :always do |study|
   Misc.bootstrap Enrichment::DATABASES, 2, :respawn => :always do |database|
     Study.setup(study)
     next if database == 'interpro'
-    study.recurrent_gene_enrichment(true, :database => database)
+    job = study.recurrent_gene_enrichment(:job, :database => database)
+    if not job.done?
+      job.run(true)
+      Step.wait_for_jobs job
+    end
+
     #study.mutation_enrichment(true, :database => database)
   end
   Log.warn "STUDY BOOTSTRAP - " + study
@@ -70,7 +90,12 @@ end
 Log.warn "STUDY BOOTSTRAP - 4"
 Misc.bootstrap studies, 3, :respawn => :always do |study|
   Study.setup(study)
-  study.firestar_neighbours
+  job = study.firestar_neighbours(:job)
+  if not job.done?
+    job.run(true)
+    Step.wait_for_jobs job
+  end
+
   Log.warn "STUDY BOOTSTRAP - " + study
   nil
 end
@@ -78,8 +103,18 @@ end
 Log.warn "STUDY BOOTSTRAP - 5"
 Misc.bootstrap studies, 3, :respawn => :always do |study|
   Study.setup(study)
-  study.mi_annotations
-  study.genomic_mutation_annotations
+  job = study.mi_annotations(:job)
+  if not job.done?
+    job.run(true)
+    Step.wait_for_jobs job
+  end
+
+  job = study.genomic_mutation_annotations(:job)
+  if not job.done?
+    job.run(true)
+    Step.wait_for_jobs job
+  end
+
   Log.warn "STUDY BOOTSTRAP - " + study
   nil
 end
@@ -87,9 +122,19 @@ end
 Log.warn "STUDY BOOTSTRAP - 6"
 Misc.bootstrap studies, 2, :respawn => :always do |study|
   Study.setup(study)
-  study.binomial_significance
+  job = study.binomial_significance(:job)
+  if not job.done?
+    job.run(true)
+    Step.wait_for_jobs job
+  end
+
   Misc.bootstrap Enrichment::DATABASES, 2, :respawn => :always do |database|
-    study.significant_gene_enrichment(true, :database => database)
+    job = study.significant_gene_enrichment(:job, :database => database)
+    if not job.done?
+      job.run(true)
+      Step.wait_for_jobs job
+    end
+
   end
   Log.warn "STUDY BOOTSTRAP - " + study
   nil
@@ -101,7 +146,12 @@ Misc.bootstrap studies, 2, :respawn => :always do |study|
   Misc.bootstrap Enrichment::DATABASES, 2, :respawn => :always do |database|
     Study.setup(study)
     next if database == 'interpro'
-    study.sample_enrichment(true, :database => database)
+    job = study.sample_enrichment(:job, :database => database)
+    if not job.done?
+      job.run(true)
+      Step.wait_for_jobs job
+    end
+
     #study.mutation_enrichment(true, :database => database)
   end
   Log.warn "STUDY BOOTSTRAP - " + study

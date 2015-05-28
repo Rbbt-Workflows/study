@@ -30,6 +30,7 @@ else
 end
 
 $cpus ||= options[:cpus] || 3
+enrichment_databases = Enrichment::DATABASES - ['interpro', 'matador', 'kegg', 'gene_ages', 'go', 'go_bp', 'go_mf', 'go_cc', 'reactome', 'biogrid']
 
 Log.warn "STUDY BOOTSTRAP - 1"
 Misc.bootstrap studies, [$cpus, studies.length].min, :respawn => :always do |study|
@@ -71,7 +72,7 @@ end
 Log.warn "STUDY BOOTSTRAP - 3"
 Misc.bootstrap studies, 2, :respawn => :always do |study|
 
-  Misc.bootstrap Enrichment::DATABASES, 2, :respawn => :always do |database|
+  Misc.bootstrap enrichment_databases, 2, :respawn => :always do |database|
     Study.setup(study)
     next if database == 'interpro'
     job = study.recurrent_gene_enrichment(:job, :database => database)
@@ -128,7 +129,7 @@ Misc.bootstrap studies, 2, :respawn => :always do |study|
     Step.wait_for_jobs job
   end
 
-  Misc.bootstrap Enrichment::DATABASES, 2, :respawn => :always do |database|
+  Misc.bootstrap enrichment_databases, 2, :respawn => :always do |database|
     job = study.significant_gene_enrichment(:job, :database => database)
     if not job.done?
       job.run(true)
@@ -143,7 +144,7 @@ end
 Log.warn "STUDY BOOTSTRAP - 7"
 Misc.bootstrap studies, 2, :respawn => :always do |study|
 
-  Misc.bootstrap Enrichment::DATABASES, 2, :respawn => :always do |database|
+  Misc.bootstrap enrichment_databases, 2, :respawn => :always do |database|
     Study.setup(study)
     next if database == 'interpro'
     job = study.sample_enrichment(:job, :database => database)

@@ -37,10 +37,7 @@ Misc.bootstrap studies, [$cpus, studies.length].min, :respawn => :always do |stu
   Study.setup(study)
 
   job = study.sample_genes(:job)
-  if not job.done?
-    job.run(true)
-    Step.wait_for_jobs job
-  end
+  job.produce
 
   study.knowledge_base.registry.keys.each do |database|
     study.knowledge_base.get_index(database).reverse
@@ -53,16 +50,10 @@ Log.warn "STUDY BOOTSTRAP - 2"
 Misc.bootstrap studies, [$cpus, studies.length].min, :respawn => :always do |study|
   Study.setup(study)
   job = study.firestar(:job)
-  if not job.done?
-    job.run(true)
-    Step.wait_for_jobs job
-  end
+  job.produce
 
   job = study.kinmut(:job)
-  if not job.done?
-    job.run(true)
-    Step.wait_for_jobs job
-  end
+  job.produce
 
   Log.warn "STUDY BOOTSTRAP - " + study
   nil
@@ -76,12 +67,10 @@ Misc.bootstrap studies, 2, :respawn => :always do |study|
     Study.setup(study)
     next if database == 'interpro'
     job = study.recurrent_gene_enrichment(:job, :database => database)
-    if not job.done?
-      job.run(true)
-      Step.wait_for_jobs job
-    end
-
+    job.produce
     #study.mutation_enrichment(true, :database => database)
+    
+    nil
   end
   Log.warn "STUDY BOOTSTRAP - " + study
   nil
@@ -92,10 +81,7 @@ Log.warn "STUDY BOOTSTRAP - 4"
 Misc.bootstrap studies, 3, :respawn => :always do |study|
   Study.setup(study)
   job = study.firestar_neighbours(:job)
-  if not job.done?
-    job.run(true)
-    Step.wait_for_jobs job
-  end
+  job.produce
 
   Log.warn "STUDY BOOTSTRAP - " + study
   nil
@@ -105,16 +91,10 @@ Log.warn "STUDY BOOTSTRAP - 5"
 Misc.bootstrap studies, 3, :respawn => :always do |study|
   Study.setup(study)
   job = study.mi_annotations(:job)
-  if not job.done?
-    job.run(true)
-    Step.wait_for_jobs job
-  end
+  job.produce
 
   job = study.genomic_mutation_annotations(:job)
-  if not job.done?
-    job.run(true)
-    Step.wait_for_jobs job
-  end
+  job.produce
 
   Log.warn "STUDY BOOTSTRAP - " + study
   nil
@@ -124,18 +104,12 @@ Log.warn "STUDY BOOTSTRAP - 6"
 Misc.bootstrap studies, 2, :respawn => :always do |study|
   Study.setup(study)
   job = study.binomial_significance(:job)
-  if not job.done?
-    job.run(true)
-    Step.wait_for_jobs job
-  end
+  job.produce
 
   Misc.bootstrap enrichment_databases, 2, :respawn => :always do |database|
     job = study.significant_gene_enrichment(:job, :database => database)
-    if not job.done?
-      job.run(true)
-      Step.wait_for_jobs job
-    end
-
+    job.produce
+    nil
   end
   Log.warn "STUDY BOOTSTRAP - " + study
   nil
@@ -148,12 +122,9 @@ Misc.bootstrap studies, 2, :respawn => :always do |study|
     Study.setup(study)
     next if database == 'interpro'
     job = study.sample_enrichment(:job, :database => database)
-    if not job.done?
-      job.run(true)
-      Step.wait_for_jobs job
-    end
-
+    job.produce
     #study.mutation_enrichment(true, :database => database)
+    nil
   end
   Log.warn "STUDY BOOTSTRAP - " + study
   nil

@@ -4,10 +4,7 @@ CohortTasks = Proc.new do
     study = Study.setup(jobname.dup)
     jobs = study.genotyped_samples.collect{|sample| Sample.setup(sample, :cohort => study); sample.mutation_info(:job) }.flatten
     Misc.bootstrap(jobs, nil, :bar => "Processing sample mutation_info", :respawn => :always) do |job|
-      next if job.done? and not job.dirty?
-      job.clean if job.dirty? or (job.started? and not job.running?)
-      job.run(true) unless (job.done? or job.started?) 
-      Step.wait_for_jobs job unless job.done?
+      job.produce
       nil
     end
     jobs
@@ -37,10 +34,7 @@ CohortTasks = Proc.new do
     study = Study.setup(jobname.dup)
     jobs = study.genotyped_samples.collect{|sample| Sample.setup(sample, :cohort => study); sample.gene_sample_mutation_status(:job) }.flatten
     Misc.bootstrap(jobs, nil, :bar => "Processing gene_sample_mutation_status", :respawn => :always) do |job|
-      next if job.done? and not job.dirty?
-      job.clean if job.dirty? or (job.started? and not job.running?)
-      job.run(false) unless job.done? or job.started? 
-      Step.wait_for_jobs job unless job.done?
+      job.produce
       nil
     end
     jobs

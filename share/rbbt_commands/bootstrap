@@ -29,8 +29,10 @@ else
   studies = Sample.all_studies
 end
 
+studies = studies.select{|s| Study.setup(s.dup).has_genotypes? }
+
 $cpus ||= options[:cpus] || 3
-enrichment_databases = Enrichment::DATABASES - ['interpro', 'pfamm', 'matador', 'kegg', 'gene_ages', 'go', 'go_bp', 'go_mf', 'go_cc', 'reactome', 'biogrid']
+enrichment_databases = Enrichment::DATABASES - ['interpro', 'pfamm', 'biocarta', 'matador', 'kegg', 'gene_ages', 'go', 'go_bp', 'go_mf', 'go_cc', 'reactome', 'biogrid']
 
 Log.warn "STUDY BOOTSTRAP - 1"
 Misc.bootstrap studies, [$cpus, studies.length].min, :respawn => :always do |study|

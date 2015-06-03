@@ -114,6 +114,13 @@ CohortTasks = Proc.new do
     end
   end
 
+  dep :binomial_significance
+  task :sorted_significant_genes => :array do |threshold|
+    Step.wait_for_jobs dependencies
+    field_pos = TSV.parse_header(step(:binomial_significance).path).all_fields.index "p.value"
+    CMD.cmd("sort -k #{field_pos + 1} -g '#{step(:binomial_significance).path}' | cut -f 1", :pipe => true)
+  end
+
   task :mappable_genes => :array do |threshold|
     mappable_regions_file = Study.find_study(study).mappable_regions
     if mappable_regions_file.exists?
@@ -155,10 +162,19 @@ CohortTasks = Proc.new do
   dep :organism
   dep :significant_genes
   dep :mappable_genes
-  dep Enrichment, :enrichment, :organism => :organism, :list => :significant_genes, :mappable_genes => :mappable_genes
+  dep Enrichment, :enrichment, :organism => :organism, :list => :significant_genes, :background => :mappable_genes
   input :database, :string, "Database to use", nil, :select_options => Enrichment::DATABASES
   task :significant_gene_enrichment => :tsv do
     TSV.get_stream step(:enrichment)
+  end
+
+  dep :organism
+  dep :sorted_significant_genes
+  dep :mappable_genes
+  dep Enrichment, :rank_enrichment, :organism => :organism, :list => :sorted_significant_genes, :background => :mappable_genes
+  input :database, :string, "Database to use", nil, :select_options => Enrichment::DATABASES
+  task :significance_rank_enrichment => :tsv do
+    TSV.get_stream step(:rank_enrichment)
   end
 
 end

@@ -4,6 +4,7 @@ Workflow.require_workflow "GERP"
 Workflow.require_workflow "DbSNP"
 Workflow.require_workflow "DbNSFP"
 Workflow.require_workflow "EVS"
+
 SNVTasks = Proc.new do
 
   dep :genomic_mutations

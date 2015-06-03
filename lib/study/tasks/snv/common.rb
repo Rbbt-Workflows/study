@@ -69,7 +69,7 @@ SNVTasks = Proc.new do
   dep :mi
   task :kinmut => :tsv do
     begin
-      KinMut2.job(:predict_fix, clean_name, :mutations => step(:mi).path).run
+      KinMut2.job(:predict_fix, clean_name, :mutations => step(:mi)).run
     rescue Exception
       Log.warn "KinMut error: " << $!.message
       ""
@@ -158,5 +158,44 @@ SNVTasks = Proc.new do
   dep Sequence, :TSS, :positions => :genomic_mutations, :organism => :organism
   task :TSS => :tsv do
     TSV.get_stream step(:TSS)
+  end
+
+  dep :DbNSFP
+  task :gene_damage_bias => :tsv do 
+
+    damage_field = "MetaSVM_score"
+    protein_bg_scores = {}
+    protein_scores = {}
+    TSV.traverse step(:DbNSFP), :fields => [damage_field], :type => :single, :bar => self.progress_bar("Traversing protein mutation scores") do |mi, score|
+      mi = mi.first if Array === mi
+      next unless mi =~ /ENSP/
+      protein = mi.split(":").first
+      protein_bg_scores[protein] ||= begin
+                                       all_protein_mis = DbNSFP.job(:possible_mutations, clean_name + ' ' + protein, :protein => protein).exec
+                                       if all_protein_mis
+                                         prediction_job = DbNSFP.job(:annotate, "all_" + protein, :mutations => all_protein_mis)
+                                         prediction_job.produce
+                                         prediction_job.path.tsv(:fields => [damage_field], :type => :single, :cast => :to_f).values.flatten.compact.reject{|v| v == -999 }
+                                       else
+                                         nil
+                                       end
+                                     rescue
+                                       Log.exception $!
+                                       nil
+                                     end
+      protein_scores[protein] ||= []
+      protein_scores[protein] << score
+      nil
+    end
+
+    tsv = TSV.setup({}, :key_field => "Ensembl Protein ID", :fields => ["Score Avg.", "Background Score Avg.", "p.value"], :type => :list)
+    protein_scores.each do |protein,scores|
+      next if scores.nil? or scores.length < 3
+      bg_scores = protein_bg_scores[protein]
+      next if bg_scores.nil? or bg_scores.length < 3
+      pvalue = R.eval_a "t.test(#{R.ruby2R scores}, #{R.ruby2R bg_scores})$p.value"
+      tsv[protein] = [Misc.mean(scores) || scores.first, Misc.mean(bg_scores) || bg_scores.first, pvalue]
+    end
+    tsv
   end
 end

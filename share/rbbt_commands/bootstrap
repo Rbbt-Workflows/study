@@ -34,21 +34,33 @@ studies = studies.select{|s| Study.setup(s.dup).has_genotypes? }
 $cpus ||= options[:cpus] || 3
 enrichment_databases = Enrichment::DATABASES - ['interpro', 'pfamm', 'biocarta', 'matador', 'kegg', 'gene_ages', 'go', 'go_bp', 'go_mf', 'go_cc', 'reactome', 'biogrid']
 
-Log.warn "STUDY BOOTSTRAP - 1"
+i = 0
+
+Log.warn "STUDY BOOTSTRAP - #{i+=1; i}"
 Misc.bootstrap studies, [$cpus, studies.length].min, :respawn => :always do |study|
   Study.setup(study)
 
   job = study.sample_genes(:job)
   job.produce
 
-  study.knowledge_base.registry.keys.each do |database|
+  job = study.mutation_info(:job)
+  job.produce
+
+  Log.warn "STUDY BOOTSTRAP - " + study
+  nil
+end
+
+Log.warn "STUDY BOOTSTRAP - #{i+=1; i}"
+Misc.bootstrap studies, [$cpus, studies.length].min, :respawn => :always do |study|
+  Study.setup(study)
+  Misc.bootstrap study.knowledge_base.registry.keys, 1, :respawn => :always do |database|
     study.knowledge_base.get_index(database).reverse
   end
   Log.warn "STUDY BOOTSTRAP - " + study
   nil
 end
 
-Log.warn "STUDY BOOTSTRAP - 2"
+Log.warn "STUDY BOOTSTRAP - #{i+=1; i}"
 Misc.bootstrap studies, [$cpus, studies.length].min, :respawn => :always do |study|
   Study.setup(study)
   job = study.firestar(:job)
@@ -62,7 +74,7 @@ Misc.bootstrap studies, [$cpus, studies.length].min, :respawn => :always do |stu
 end
 
 
-Log.warn "STUDY BOOTSTRAP - 3"
+Log.warn "STUDY BOOTSTRAP - #{i+=1; i}"
 Misc.bootstrap studies, 2, :respawn => :always do |study|
 
   Misc.bootstrap enrichment_databases, 2, :respawn => :always do |database|
@@ -79,7 +91,7 @@ Misc.bootstrap studies, 2, :respawn => :always do |study|
 end
 
 
-Log.warn "STUDY BOOTSTRAP - 4"
+Log.warn "STUDY BOOTSTRAP - #{i+=1; i}"
 Misc.bootstrap studies, 3, :respawn => :always do |study|
   Study.setup(study)
   job = study.firestar_neighbours(:job)
@@ -89,20 +101,17 @@ Misc.bootstrap studies, 3, :respawn => :always do |study|
   nil
 end
 
-Log.warn "STUDY BOOTSTRAP - 5"
+Log.warn "STUDY BOOTSTRAP - #{i+=1; i}"
 Misc.bootstrap studies, 3, :respawn => :always do |study|
   Study.setup(study)
   job = study.mi_annotations(:job)
-  job.produce
-
-  job = study.genomic_mutation_annotations(:job)
   job.produce
 
   Log.warn "STUDY BOOTSTRAP - " + study
   nil
 end
 
-Log.warn "STUDY BOOTSTRAP - 6"
+Log.warn "STUDY BOOTSTRAP - #{i+=1; i}"
 Misc.bootstrap studies, 2, :respawn => :always do |study|
   Study.setup(study)
   job = study.binomial_significance(:job)
@@ -117,7 +126,18 @@ Misc.bootstrap studies, 2, :respawn => :always do |study|
   nil
 end
 
-Log.warn "STUDY BOOTSTRAP - 7"
+Log.warn "STUDY BOOTSTRAP - #{i+=1; i}"
+Misc.bootstrap studies, 1, :respawn => :always do |study|
+  Study.setup(study)
+
+  job = study.genomic_mutation_annotations(:job)
+  job.produce
+
+  Log.warn "STUDY BOOTSTRAP - " + study
+  nil
+end
+
+Log.warn "STUDY BOOTSTRAP - #{i+=1; i}"
 Misc.bootstrap studies, 2, :respawn => :always do |study|
 
   Misc.bootstrap enrichment_databases, 2, :respawn => :always do |database|

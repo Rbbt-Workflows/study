@@ -171,7 +171,7 @@ CohortTasks = Proc.new do
   dep :organism
   dep :sorted_significant_genes
   dep :mappable_genes
-  dep Enrichment, :rank_enrichment, :organism => :organism, :list => :sorted_significant_genes, :background => :mappable_genes
+  dep Enrichment, :rank_enrichment, :organism => :organism, :list => :sorted_significant_genes, :background => :mappable_genes, :permutations => 100_000
   input :database, :string, "Database to use", nil, :select_options => Enrichment::DATABASES
   task :significance_rank_enrichment => :tsv do
     TSV.get_stream step(:rank_enrichment)

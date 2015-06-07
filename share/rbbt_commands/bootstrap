@@ -32,7 +32,7 @@ end
 studies = studies.select{|s| Study.setup(s.dup).has_genotypes? }
 
 $cpus ||= options[:cpus] || 3
-enrichment_databases = Enrichment::DATABASES - ['interpro', 'pfamm', 'biocarta', 'matador', 'kegg', 'gene_ages', 'go', 'go_bp', 'go_mf', 'go_cc', 'reactome', 'biogrid']
+enrichment_databases = Enrichment::DATABASES - ['interpro', 'pfam', 'pina', 'tfacts', 'biocarta', 'matador', 'kegg', 'gene_ages', 'go', 'go_bp', 'go_mf', 'go_cc', 'reactome', 'biogrid']
 
 i = 0
 
@@ -142,7 +142,6 @@ Misc.bootstrap studies, 2, :respawn => :always do |study|
 
   Misc.bootstrap enrichment_databases, 2, :respawn => :always do |database|
     Study.setup(study)
-    next if database == 'interpro'
     job = study.sample_enrichment(:job, :database => database)
     job.produce
     #study.mutation_enrichment(true, :database => database)

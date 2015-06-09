@@ -1,4 +1,4 @@
-require 'study/tasks/snv/common'
+require 'sample/tasks/snv/common'
 require 'study/tasks/snv/cohort'
 
 module Study

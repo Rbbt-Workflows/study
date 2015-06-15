@@ -30,7 +30,7 @@ module Study
       next if elems.nil? or elems.empty?
       elems * "\n"
     end
-    CMD.cmd('sort -u', :in => _s, :pipe => true)
+    CMD.cmd('env LC_ALL=C sort -u', :in => _s, :pipe => true)
   end
 
   property :metagenotype => :single do

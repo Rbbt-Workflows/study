@@ -49,7 +49,7 @@ module Study
       res * "\n"
     end
 
-    sorted = CMD.cmd('sort -u', :in => io, :pipe => true)
+    sorted = CMD.cmd('env LC_ALL=C sort -u', :in => io, :pipe => true)
 
     raise "No mutations" if tsv.nil?
 

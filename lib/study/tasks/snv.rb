@@ -25,7 +25,7 @@ module Study
       dep_list = chunks[i]
       streams = dep_list.collect do |dep|
         sample = File.basename(dep.path).split(":").last
-        TSV.traverse CMD.cmd('sort', :in => dep.path.open, :pipe => true), :into => :stream, :type => :array, :bar => "Processing #{ sample }" do |mutation|
+        TSV.traverse CMD.cmd('env LC_ALL=C sort', :in => dep.path.open, :pipe => true), :into => :stream, :type => :array, :bar => "Processing #{ sample }" do |mutation|
           [mutation, sample] * "\t"
         end
       end

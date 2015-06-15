@@ -240,11 +240,12 @@ CohortTasks = Proc.new do
       samples = mutation_index[mut]
       mis = ns_mis & mis
       next if mis.empty?
-      total_mutations += samples.length
+      found = false
       mis.each do |mi|
-        next unless firestar.include? mi or firestar_neighbours.include? mi or interfaces.include? mi
         protein, _sep, change = mi.partition(":")
         next unless Appris::PRINCIPAL_ISOFORMS.include? protein
+        found = true
+        next unless firestar.include? mi or firestar_neighbours.include? mi or interfaces.include? mi
 
         fire = firestar[mi] || []
         nfire = firestar_neighbours[mi] || []
@@ -270,12 +271,16 @@ CohortTasks = Proc.new do
         end
 
       end
+      total_mutations += samples.length if found
     end
 
+    total_appris_sequence = self.total_appris_sequence
+
     set_info :total_mutations, total_mutations
+    set_info :total_appris_sequence, total_appris_sequence
+
     Open.write(file('broken_PPI'), affected_pairs.collect{|p| p*"\t"}*"\n")
 
-    total_appris_sequence = self.total_appris_sequence
     feature_WGS_residues = self.feature_WGS_residues
 
     feature_info = {}
@@ -285,10 +290,11 @@ CohortTasks = Proc.new do
       genes = sample_muts.collect{|sm| sm.split("_").last}.uniq
       wgs_count = feature_WGS_residues[feature]
       ratio = count.to_f / wgs_count.to_f
-      feature_info[feature] = [ratio, count, wgs_count, genes*"|", sample_muts * "|"]
+      freq = wgs_count.to_f/total_appris_sequence
+      feature_info[feature] = [ratio, freq, count, wgs_count, genes*"|", sample_muts * "|"]
     end
 
-    TSV.setup feature_info, :key_field => "Firestar feature", :fields => ["Ratio", "Matches", "Total residues with feature", "Ensembl Gene ID", "Sample Mutations"], :type => :double, :namespace => organism
+    TSV.setup feature_info, :key_field => "Firestar feature", :fields => ["Ratio", "Frequency of residue", "Matches", "Total residues with feature", "Ensembl Gene ID", "Sample Mutations"], :type => :double, :namespace => organism
 
 
     feature_info = feature_info.R <<-EOF, nil, :R_open => 'na.string=NULL'
@@ -341,8 +347,8 @@ data
     data$p.value = as.numeric(data$p.value)
     data$Feature = rownames(data); 
     ggplot(aes(x=Matches,y=Total.residues.with.feature, colour=log10(Ratio), label=Feature, size=-log10(p.value)), data=data) + 
-      geom_text(vjust=0.5,hjust=-0.5) + stat_smooth(method="lm", se=FALSE) + 
-      scale_x_log10() + scale_y_log10() + geom_point()
+      geom_text(vjust=0.5,hjust=-2) + stat_smooth(method="lm", se=FALSE) + 
+      scale_x_log10() + scale_y_log10() 
     EOF
     R::SVG.ggplotSVG(feature_info, script, 10, 10, :R_open => 'na.string=NULL')
   end

@@ -16,6 +16,7 @@ $ rbbt workflow cmd Study [<directory>] [<study>,<study>,...]
 
 If no directory is used, the default is used #{Sample.study_repo}
 
+--task* Bootstrap only one task
 --cpus CPUs to use concurrently
 -h--help Print this help
 EOF
@@ -29,7 +30,18 @@ else
   studies = Sample.all_studies
 end
 
+task = options[:task]
 studies = studies.select{|s| Study.setup(s.dup).has_genotypes? }
+
+if task
+  Misc.bootstrap studies, [$cpus, studies.length].min, :respawn => :always do |study|
+    Study.setup(study)
+
+    job = study.send(task.to_sym, :job)
+    job.produce
+  end
+  exit
+end
 
 $cpus ||= options[:cpus] || 3
 enrichment_databases = Enrichment::DATABASES - ['interpro', 'pfam', 'pina', 'tfacts', 'biocarta', 'matador', 'kegg', 'gene_ages', 'go', 'go_bp', 'go_mf', 'go_cc', 'reactome', 'biogrid']

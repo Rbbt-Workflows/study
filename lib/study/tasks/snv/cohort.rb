@@ -153,7 +153,7 @@ CohortTasks = Proc.new do
   task :sorted_significant_genes => :array do |threshold|
     Step.wait_for_jobs dependencies
     field_pos = TSV.parse_header(step(:binomial_significance).path).all_fields.index "p.value"
-    CMD.cmd("sort -k #{field_pos + 1} -g '#{step(:binomial_significance).path}' | cut -f 1", :pipe => true)
+    CMD.cmd("env LC_ALL=C sort -k #{field_pos + 1} -g '#{step(:binomial_significance).path}' | cut -f 1", :pipe => true)
   end
 
   task :mappable_genes => :array do |threshold|

@@ -1,0 +1,14 @@
+- study = entity
+
+- action_card = ActionCard.new
+
+- action_card.description do
+
+  :markdown
+    Compare damage scores (MetaLR_score from DbNSFP) of mutations in study with all possible mutations
+
+= action_card_render action_card do
+  = table :page => "1~p.value" do
+    - ts  = study.gene_damage_bias
+    -ts.namespace = study.organism
+    - ts

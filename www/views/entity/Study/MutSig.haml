@@ -1,0 +1,16 @@
+- study = entity
+
+- action_card = ActionCard.new
+
+- action_card.description do
+
+  :markdown
+    These results come from [MutSig](https://www.broadinstitute.org/cancer/cga/mutsig)
+
+= action_card_render action_card do
+  
+  - tsv = study.job(:mut_sig).run
+  - tsv.fields.each do |field|
+    - header field, "NumericValue"
+  = table :page => "1~p" do
+    - tsv

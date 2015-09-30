@@ -124,3 +124,21 @@ if defined? Sample and Entity === Sample
     end
   end
 end
+
+
+if defined? Gene and Entity === Gene
+  module Gene
+
+    property :significant_in_study => :array do |study|
+      sg = Study.setup(study).significant_genes
+      self.collect do |gene|
+        sg.include? gene
+      end
+    end
+
+    property :damage_bias_in_study => :array do |study|
+      db = Study.setup(study).gene_damage_bias
+      db.chunked_values_at(self).collect{|values| values.nil? ? nil : values.last}
+    end
+  end
+end

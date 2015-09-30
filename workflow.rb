@@ -30,6 +30,7 @@ require 'study/tasks/samples'
 #require 'study/tasks/expression'
 
 require 'study/tasks/snv'
+require 'study/tasks/maf'
 
 module Study
   extend Entity 

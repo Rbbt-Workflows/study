@@ -11,10 +11,10 @@ Study=/$PWD filter="*.rb *.R *.js *.sass *.haml *.tsv" {
    cnv.rb
    expression.rb
    pancancer.rb
+   maf.rb
 
    snv.rb
    snv=snv{
-    common.rb
     cohort.rb
    }
   }
@@ -46,6 +46,7 @@ Study=/$PWD filter="*.rb *.R *.js *.sass *.haml *.tsv" {
     Study.haml
     Study=Study{
      binomial_significance.haml
+     MutSig.haml
      count_tables.haml
      gene_list_report.haml
      gene_report.haml

@@ -38,7 +38,7 @@ CohortTasks = Proc.new do
   dep Sample, :mutation_info do |jobname,options|
     study = Study.setup(jobname.dup)
     jobs = study.genotyped_samples.collect{|sample| Sample.setup(sample, :cohort => study); sample.mutation_info(:job, options) }.flatten
-    Misc.bootstrap(jobs, nil, :bar => "Processing sample mutation_info", :respawn => :always) do |job|
+    Misc.bootstrap(jobs, 1, :bar => "Processing sample mutation_info", :respawn => :always) do |job|
       job.produce
       nil
     end
@@ -68,7 +68,7 @@ CohortTasks = Proc.new do
   dep Sample, :gene_sample_mutation_status do |jobname,options|
     study = Study.setup(jobname.dup)
     jobs = study.genotyped_samples.collect{|sample| Sample.setup(sample, :cohort => study); sample.gene_sample_mutation_status(:job, options) }.flatten
-    Misc.bootstrap(jobs, nil, :bar => "Processing gene_sample_mutation_status", :respawn => :always) do |job|
+    Misc.bootstrap(jobs, 1, :bar => "Processing gene_sample_mutation_status", :respawn => :always) do |job|
       job.produce
       nil
     end
@@ -103,10 +103,12 @@ CohortTasks = Proc.new do
   dep :genotyped_samples
   input :recurrent_threshold, :float, "Proportion of samples with gene affected (e.g. 0.05 for 5%)", 0.05
   task :recurrent_genes => :array do |recurrent_threshold|
-    threshold_count = recurrent_threshold * step(:genotyped_samples).load.length
+    threshold_count = (recurrent_threshold.to_f * step(:genotyped_samples).load.length).ceil
+    threshold_count = 2 if threshold_count < 2
     TSV.traverse step(:sample_genes), :type => :array, :into => :stream do |line|
       next if line =~ /^#/
-        gene, samples, overlapping, affected = line.split("\t")
+
+      gene, samples, overlapping, affected = line.split("\t")
       affected_samples = samples.split("|").zip(affected.split("|")).collect{|d,a| a.to_s == 'true' ? d : nil}.compact
       next unless affected_samples.length >= threshold_count
       gene

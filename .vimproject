@@ -35,9 +35,10 @@ Study=/$PWD filter="*.rb *.R *.js *.sass *.haml *.tsv" {
   study_repo
  }
  share=share{
-  rbbt_commands=rbbt_commands{
-   knowledge_base
+  rbbt_commands=rbbt_commands filter="*"{
    bootstrap
+   knowledge_base
+   maf2study
   }
  }
  www=www{

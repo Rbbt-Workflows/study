@@ -183,12 +183,12 @@ module Study
     end
   end
 
-  Workflow.require_workflow "MutSig"
-  if defined? MutSig
-    dep :maf_file
-    dep MutSig, :analysis, :maf_file => :maf_file
-    task :mut_sig => :tsv do
-      TSV.get_stream step(:analysis)
-    end
-  end
+  #Workflow.require_workflow "MutSig"
+  #if defined? MutSig
+  #  dep :maf_file
+  #  dep MutSig, :analysis, :maf_file => :maf_file
+  #  task :mut_sig => :tsv do
+  #    TSV.get_stream step(:analysis)
+  #  end
+  #end
 end

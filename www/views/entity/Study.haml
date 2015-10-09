@@ -1,31 +1,31 @@
 - study = entity
 
-- entity_card = EntityCard.new(entity)
-- entity_card.name = entity
-- entity_card.long_name = entity.metadata[:condition]
+- entity_card = EntityCard.new(study)
+- entity_card.name = study
+- entity_card.long_name = study.metadata[:condition]
 - entity_card.meta
 - entity_card.meta do
   :plain
-    #{hash2dl entity.metadata}
+    #{hash2dl study.metadata}
   %dl
 
     %dt Registered samples 
-    %dd= study.samples.list_link :length, "Samples in #{ entity }"
+    %dd= study.samples.list_link :length, "Samples in #{ study }"
 
-    - if entity.respond_to?(:has_genotypes?) and entity.has_genotypes?
+    - if study.respond_to?(:has_genotypes?) and study.has_genotypes?
       - samples = study.genotyped_samples
       %dt Genotyped samples
-      %dd= samples.list_link :length, "Genotyped samples in #{ entity }"
+      %dd= samples.list_link :length, "Genotyped samples in #{ study }"
 
-    - if entity.respond_to?(:has_cnv?) and entity.has_cnv?
+    - if study.respond_to?(:has_cnv?) and study.has_cnv?
       - samples = study.samples.select{|s| s.has_cnv? }
       %dt CNV samples
-      %dd= samples.list_link :length, "CNV samples in #{ entity }"
+      %dd= samples.list_link :length, "CNV samples in #{ study }"
 
-    - if entity.respond_to?(:matrices) and entity.matrices.include? "gene_expression"
+    - if study.respond_to?(:matrices) and study.matrices.include? "gene_expression"
       - samples = study.samples.select{|s| s.has_gene_expression? }
       %dt Gene expression samples
-      %dd= samples.list_link :length, "Gene expression samples in #{ entity }"
+      %dd= samples.list_link :length, "Gene expression samples in #{ study }"
 
 - entity_card.description do
 

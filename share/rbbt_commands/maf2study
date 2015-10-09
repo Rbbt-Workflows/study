@@ -12,19 +12,25 @@ Turn a MAF file into a project directory
 $ #{$0} <filename.maf> <directory>
 
 -h--help Print this help
--c--chromosome_field* Chromosome field
--s--start_field* Start field
--e--end_field* End field
--r--reference_field* Reference allele field 
--a--alternate_field* Alternative allele field 
--d--donor_field* Donor field
--sf--study_field* Study field
--o--organism Organism code
--w--watson* Mutations given in the watson or forward strand
--ex--exome* Exome sequencing, as opposed to Whole Genome
--u--users Users allowed for these studies
-
+-o--organism* Organism code
+-w--watson Mutations given in the watson or forward strand
+-ex--exome Exome sequencing, as opposed to Whole Genome
+-u--users* Users allowed for these studies
+-c--chromosome_field* Chromosome field in MAF
+-s--start_field* Start field in MAF
+-e--end_field* End field in MAF
+-r--reference_field* Reference allele field in MAF
+-a--alternate_field* Alternative allele field in MAF
+-d--donor_field* Donor fieldin MAF
+-sf--study_field* Study fieldin MAF
+-si--sample_ids* Sample identifier map
+-e--expression* Expression matrix file
+-ei--expression_id* Sample id field for expression values
+-ein--expression_id_normal* Sample id field for normal expression values
+-bl--blacklist* Blacklisted donor ids
+-mr--mappable_regions* Mappable region file to add to project
 EOF
+
 if options[:help]
   if defined? rbbt_usage
     rbbt_usage 
@@ -46,6 +52,15 @@ r_field = options[:reference_field] || "Reference_Allele"
 a_field = options[:alternate_field] || "Alternate_Allele"
 d_field = options[:donor_id] || "Donor_ID"
 sf_field = options[:study_field] || "Project_Code"
+blacklist_file = options[:blacklist]
+
+
+blacklist_file ||= 'blacklist-donors'
+if File.exists? blacklist_file
+  blacklist = Set.new(Open.read(blacklist_file).split("\n"))
+else
+  blacklist = Set.new
+end
 
 organism = options[:organism] || Organism.default_code("Hsa")
 watson = options[:watson]
@@ -55,7 +70,7 @@ exome = true if exome.nil?
 users = (options[:users] || 'public' ).split(",").collect{|u| u.strip }
 
 
-all_fields = TSV.parse_header(filename, :header_hash => "").all_fields
+all_fields = TSV.parse_header(filename, :header_hash => true).all_fields
 
 c_pos  = Misc.field_position all_fields, c_field
 s_pos  = Misc.field_position all_fields, s_field
@@ -75,9 +90,14 @@ def sample_stream(sample, study)
 end
 
 sample_study = {}
+study_samples = {}
+studies = Set.new
+all_samples = Set.new
 TSV.traverse filename, :bar => true, :type => :array do |line|
   next if line =~ /^Chromosome/
   chr, start, eend, ref, _mut, sample, study = line.split("\t").values_at c_pos, s_pos, e_pos, r_pos, a_pos, d_pos, sf_pos
+  next if blacklist.include? sample
+
   start = start.to_i
   eend = eend.to_i
 
@@ -85,14 +105,89 @@ TSV.traverse filename, :bar => true, :type => :array do |line|
   mutations = muts.collect{|m| [chr, pos, m] * ":"}
   stream = sample_stream(sample, study)
   sample_study[sample] ||= study
+  study_samples[study] ||= Set.new
+  study_samples[study].add sample
+  studies.add study
+  all_samples.add sample
   stream.puts mutations * "\n"
   stream.close
 end
 
+# ADD METADATA
 metadata_all = {:organism => organism, :watson => watson, :exome => exome, :users => users}
-sample_study.each do |sample, study|
+map_file = options[:mappable_regions]
+studies.each do |study|
   metadata = metadata_all.dup
   metadata[:condition] = study
   Open.write(File.join($directory, study, 'metadata.yaml'), metadata.to_yaml)
+  FileUtils.cp map_file, File.join($directory, study, 'mappable_regions') if map_file
+end
+
+
+
+
+if metadata_file
+
+  metadata = Path.setup(File.expand_path(metadata_file)).yaml
+
+  Dir.glob(File.join($directory, '*')).each do |study|
+    study_name = File.basename study
+    Open.write(File.join(study, 'metadata.yaml'), metadata.merge(:condition => study_name).to_yaml)
+  end
+end
+
+
+
+# ADD EXPRESSION
+if options[:expression]
+  donor_field, count = TSV.guess_id options[:sample_ids], all_samples.to_a, :header_hash => true, :persist_update => true
+  raise "Sample field not found" if donor_field.nil?
+  Log.info "Using donor_field: " << donor_field
+  sample_id_tsv = TSV.open options[:sample_ids], :type => :list, :header_hash => true, :unnamed => true, :key_field => donor_field
+
+  expression_index = nil
+  matrix = nil
+  expression_index_normal = nil
+  TSV.traverse studies.to_a, :bar => "Traversing studies for gene expression" do |study|
+    samples = study_samples[study]
+    if options[:expression_id]
+      expression_index ||= sample_id_tsv.index :fields => [donor_field], :target => options[:expression_id], :merge => true
+
+      sample_ids = expression_index.chunked_values_at samples.to_a
+    else
+      sample_ids = samples.to_a
+    end
+
+    if sample_ids.compact.any?
+      sample_equivalence = {}
+      samples.zip(sample_ids).each do |sample, eid|
+        next if eid.nil? or eid.empty?
+        sample_equivalence[eid] = sample
+      end
+
+      matrix ||= TSV.open(options[:expression], :header_hash => true, :type => :list, :namespace => organism, :unnamed => true, :fix => Proc.new{|l| l.sub(/(ENSG\d+)\.\d+/,'\1')})
+      study_matrix = matrix.slice(sample_equivalence.keys & matrix.fields)
+      study_matrix.fields = sample_equivalence.chunked_values_at study_matrix.fields
+      Open.write(File.join($directory, study, 'matrices', 'gene_expression', 'data'), study_matrix.to_s)
+    end
+
+    if options[:expression_id_normal]
+      expression_index_normal ||= TSV.index options[:sample_ids], :fields => [donor_field], :target => options[:expression_id_normal], :merge => true
+      sample_ids = expression_index_normal.chunked_values_at samples.to_a
+
+      if sample_ids.compact.any?
+        sample_equivalence = {}
+        samples.zip(sample_ids).each do |sample, eid|
+          next if eid.nil? or eid.empty?
+          sample_equivalence[eid] = sample
+        end
+
+        matrix ||= TSV.open(options[:expression], :header_hash => true, :type => :list, :namespace => organism, :unnamed => true, :fix => Proc.new{|l| l.sub(/(ENSG\d+)\.\d/,'\1')})
+        study_matrix = matrix.slice(sample_equivalence.keys & matrix.fields)
+        study_matrix.fields = sample_equivalence.chunked_values_at study_matrix.fields
+        Open.write(File.join($directory, study, 'matrices', 'gene_expression', 'data_normal'), study_matrix.to_s)
+      end
+    end
+  end
 end
 

@@ -1,0 +1,63 @@
+#!/usr/bin/env ruby
+
+require 'rbbt-util'
+require 'rbbt/util/simpleopt'
+
+$0 = "rbbt #{$previous_commands*""} #{ File.basename(__FILE__) }" if $previous_commands
+
+options = SOPT.setup <<EOF
+
+Turn a MAF file into a project directory
+
+$ #{$0} <filename.maf> <directory>
+
+-h--help Print this help
+-c--chromosome_field* Chromosome field in MAF
+-s--start_field* Start field in MAF
+-e--end_field* End field in MAF
+-r--reference_field* Reference allele field in MAF
+-a--alternate_field* Alternative allele field in MAF
+EOF
+
+if options[:help]
+  if defined? rbbt_usage
+    rbbt_usage 
+  else
+    puts SOPT.usage
+  end
+  exit 0
+end
+
+filename = ARGV.first
+
+raise "No filename specified" if filename.nil?
+raise "File not found: #{ filename }" unless Open.exists? filename
+
+c_field = options[:chromosome_field] || "Chromosome"
+s_field = options[:start_field] || "Start_position"
+e_field = options[:end_field] || "End_position"
+r_field = options[:reference_field] || "Reference_Allele"
+a_field = options[:alternate_field] || "Alternate_Allele"
+
+filename = Path.setup(filename.dup)
+all_fields = CMD.cmd("zcat #{filename} | head -n 1 ").read.sub(/^#/,'').split("\t") 
+
+c_pos  = Misc.field_position all_fields, c_field
+s_pos  = Misc.field_position all_fields, s_field
+e_pos  = Misc.field_position all_fields, e_field
+r_pos  = Misc.field_position all_fields, r_field
+a_pos  = Misc.field_position all_fields, a_field
+
+$directory = './project' unless $directory
+
+TSV.traverse filename, :bar => true, :type => :array do |line|
+  next if line =~ /^#?Chromosome/
+  chr, start, eend, ref, _mut = line.split("\t").values_at c_pos, s_pos, e_pos, r_pos, a_pos
+
+  start = start.to_i
+  eend = eend.to_i
+
+  pos, muts = Misc.correct_vcf_mutation start, ref, _mut
+  mutations = muts.collect{|m| [chr, pos, m] * ":"}
+  puts mutations * "\n"
+end

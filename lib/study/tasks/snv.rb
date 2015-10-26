@@ -13,7 +13,7 @@ module Study
 
   dep do |jobname, task|
     study = Study.setup(jobname.dup)
-    study.genotyped_samples.collect{|sample| sample.genomic_mutations(:job)}
+    study.genotyped_samples.collect{|sample| Sample.setup(sample, :cohort => study).genomic_mutations(:job)}
   end
   task :mutation_incidence => :tsv do
     

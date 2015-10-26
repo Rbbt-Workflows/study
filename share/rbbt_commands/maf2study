@@ -50,7 +50,7 @@ s_field = options[:start_field] || "Start_position"
 e_field = options[:end_field] || "End_position"
 r_field = options[:reference_field] || "Reference_Allele"
 a_field = options[:alternate_field] || "Alternate_Allele"
-d_field = options[:donor_id] || "Donor_ID"
+d_field = options[:donor_field] || "Donor_ID"
 sf_field = options[:study_field] || "Project_Code"
 blacklist_file = options[:blacklist]
 
@@ -70,7 +70,11 @@ exome = true if exome.nil?
 users = (options[:users] || 'public' ).split(",").collect{|u| u.strip }
 
 
-all_fields = TSV.parse_header(filename, :header_hash => true).all_fields
+filename = Path.setup(filename.dup)
+
+all_fields = Open.gzip?(filename) ? 
+    CMD.cmd("zcat #{filename} | head -n 1 ").read.sub(/^#/,'').split("\t") : 
+    CMD.cmd("head -n 1 #{filename}").read.sub(/^#/,'').split("\t")  
 
 c_pos  = Misc.field_position all_fields, c_field
 s_pos  = Misc.field_position all_fields, s_field
@@ -94,7 +98,7 @@ study_samples = {}
 studies = Set.new
 all_samples = Set.new
 TSV.traverse filename, :bar => true, :type => :array do |line|
-  next if line =~ /^Chromosome/
+  next if line =~ /^#?Chromosome/
   chr, start, eend, ref, _mut, sample, study = line.split("\t").values_at c_pos, s_pos, e_pos, r_pos, a_pos, d_pos, sf_pos
   next if blacklist.include? sample
 
@@ -125,16 +129,15 @@ end
 
 
 
-
-if metadata_file
-
-  metadata = Path.setup(File.expand_path(metadata_file)).yaml
-
-  Dir.glob(File.join($directory, '*')).each do |study|
-    study_name = File.basename study
-    Open.write(File.join(study, 'metadata.yaml'), metadata.merge(:condition => study_name).to_yaml)
-  end
-end
+#if metadata_file
+#
+#  metadata = Path.setup(File.expand_path(metadata_file)).yaml
+#
+#  Dir.glob(File.join($directory, '*')).each do |study|
+#    study_name = File.basename study
+#    Open.write(File.join(study, 'metadata.yaml'), metadata.merge(:condition => study_name).to_yaml)
+#  end
+#end
 
 
 

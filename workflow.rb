@@ -39,18 +39,20 @@ module Study
     Study.job(name.to_sym, self,options)
   end
 
-  Study.tasks.each do |name, b|
-    property name.to_sym => :single do |run=true, options={}|
-      run, options = true, run if Hash === run
+  def self.update_task_properties
+    Study.tasks.each do |name, b|
+      property name.to_sym => :single do |run=true, options={}|
+        run, options = true, run if Hash === run
 
-      job = job(name,options)
-      case run
-      when nil, TrueClass
-        job.run 
-      when :path
-        job.run(true).join.path
-      when :job
-        job
+        job = job(name,options)
+        case run
+        when nil, TrueClass
+          job.run 
+        when :path
+          job.run(true).join.path
+        when :job
+          job
+        end
       end
     end
   end

@@ -4,8 +4,6 @@ require 'rbbt-util'
 require 'rbbt/util/simpleopt'
 require 'rbbt/workflow'
 
-Workflow.require_workflow "Study"
-
 $0 = "rbbt #{$previous_commands*""} #{ File.basename(__FILE__) }" if $previous_commands
 
 options = SOPT.setup <<EOF
@@ -19,7 +17,14 @@ If no directory is used, the default is used #{Sample.study_repo}
 --task* Bootstrap only one task
 --cpus CPUs to use concurrently
 -h--help Print this help
+-wd--workdir* Workdir for Workflow jobs
 EOF
+
+Workflow.workdir = options[:workdir] if options[:workdir]
+
+Workflow.require_workflow "Study"
+Workflow.require_workflow "MutSig"
+
 rbbt_usage and exit 0 if options[:help]
 
 Sample.study_repo = Path.setup(ARGV.shift.dup) if ARGV.any? 
@@ -48,6 +53,7 @@ enrichment_databases = Enrichment::DATABASES - ['interpro', 'pfam', 'pina', 'tfa
 
 i = 0
 
+
 Log.warn "STUDY BOOTSTRAP - #{i+=1; i}"
 Misc.bootstrap studies, [$cpus, studies.length].min, :respawn => :always do |study|
   Study.setup(study)
@@ -61,6 +67,7 @@ Misc.bootstrap studies, [$cpus, studies.length].min, :respawn => :always do |stu
   Log.warn "STUDY BOOTSTRAP - " + study
   nil
 end
+
 
 Log.warn "STUDY BOOTSTRAP - #{i+=1; i}"
 Misc.bootstrap studies, [$cpus, studies.length].min, :respawn => :always do |study|
@@ -78,6 +85,7 @@ Misc.bootstrap studies, [$cpus, studies.length].min, :respawn => :always do |stu
   job = study.firestar(:job)
   job.produce
 
+  next if study == "PANCANCER"
   job = study.kinmut(:job)
   job.produce
 
@@ -139,6 +147,56 @@ Misc.bootstrap studies, 2, :respawn => :always do |study|
 end
 
 Log.warn "STUDY BOOTSTRAP - #{i+=1; i}"
+Misc.bootstrap studies, [$cpus, studies.length].min, :respawn => :always do |study|
+  Study.setup(study)
+
+  job = study.gene_damage_bias(:job)
+  job.produce
+  nil
+end
+
+
+Log.warn "STUDY BOOTSTRAP - #{i+=1; i}"
+Misc.bootstrap studies, 1, :respawn => :always do |study|
+  Study.setup(study)
+  next if study == "PANCANCER"
+  job = study.mut_sig(:job)
+  job.produce
+end
+
+Log.warn "STUDY BOOTSTRAP - #{i+=1; i}"
+Misc.bootstrap studies, $cpus, :respawn => :always do |study|
+  Study.setup(study)
+  next if study == "PANCANCER"
+
+  job = study.mut_sig_significant(:job)
+  job.produce
+
+  Misc.bootstrap enrichment_databases, 2, :respawn => :always do |database|
+    job = study.mut_sig_significant_enrichment(:job, :database => database)
+    job.produce
+    nil
+  end
+
+  Log.warn "STUDY BOOTSTRAP - " + study
+  nil
+end
+
+Log.warn "STUDY BOOTSTRAP - #{i+=1; i}"
+Misc.bootstrap studies, 1, :respawn => :always do |study|
+  Study.setup(study)
+  next if study == "PANCANCER"
+
+  Misc.bootstrap enrichment_databases, 1, :respawn => :always do |database|
+    job = study.mut_sig_rank_enrichment(:job, :database => database)
+    job.produce
+    nil
+  end
+
+  Log.warn "STUDY BOOTSTRAP - " + study
+  nil
+end
+Log.warn "STUDY BOOTSTRAP - #{i+=1; i}"
 Misc.bootstrap studies, 1, :respawn => :always do |study|
   Study.setup(study)
 
@@ -162,3 +220,4 @@ Misc.bootstrap studies, 2, :respawn => :always do |study|
   Log.warn "STUDY BOOTSTRAP - " + study
   nil
 end
+

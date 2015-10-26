@@ -73,6 +73,7 @@ module Study
 
 
   MISSING = "MISSING"
+  dep :organism
   dep :genomic_mutations
   dep :mutation_incidence
   dep :genomic_mutation_consequence

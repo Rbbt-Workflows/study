@@ -2,6 +2,9 @@ require 'rbbt/entity'
 Workflow.require_workflow "Sample"
 require 'rbbt/entity/sample'
 
+$study_kb_dir ||= SOPT.get("-skbd--study_kb_dir* Directory where study knowledge-bases are stored ")[:study_kb_dir]
+$study_kb_dir = Path.setup($study_kb_dir) if $study_kb_dir
+
 module Study
   extend Entity
 
@@ -10,7 +13,7 @@ module Study
   class << self 
     attr_accessor :knowledge_base_dir
   end
-  self.knowledge_base_dir = Rbbt.var.knowledge_base.studies
+  self.knowledge_base_dir = $study_kb_dir || Rbbt.var.knowledge_base.studies
 
   def self.setup(obj, options = {})
     obj.extend Study

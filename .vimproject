@@ -39,6 +39,7 @@ Study=/$PWD filter="*.rb *.R *.js *.sass *.haml *.tsv" {
    bootstrap
    knowledge_base
    maf2study
+   maf2mutations
   }
  }
  www=www{

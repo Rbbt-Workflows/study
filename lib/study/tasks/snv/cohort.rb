@@ -38,7 +38,7 @@ CohortTasks = Proc.new do
   dep Sample, :mutation_info do |jobname,options|
     study = Study.setup(jobname.dup)
     jobs = study.genotyped_samples.collect{|sample| Sample.setup(sample, :cohort => study); sample.mutation_info(:job, options) }.flatten
-    Misc.bootstrap(jobs, 1, :bar => "Processing sample mutation_info", :respawn => :always) do |job|
+    Misc.bootstrap(jobs, 3, :bar => "Processing sample mutation_info", :respawn => :always) do |job|
       job.produce
       nil
     end
@@ -68,7 +68,7 @@ CohortTasks = Proc.new do
   dep Sample, :gene_sample_mutation_status do |jobname,options|
     study = Study.setup(jobname.dup)
     jobs = study.genotyped_samples.collect{|sample| Sample.setup(sample, :cohort => study); sample.gene_sample_mutation_status(:job, options) }.flatten
-    Misc.bootstrap(jobs, 1, :bar => "Processing gene_sample_mutation_status", :respawn => :always) do |job|
+    Misc.bootstrap(jobs, 3, :bar => "Processing gene_sample_mutation_status", :respawn => :always) do |job|
       job.produce
       nil
     end

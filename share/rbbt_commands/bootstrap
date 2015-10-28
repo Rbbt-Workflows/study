@@ -15,7 +15,7 @@ $ rbbt workflow cmd Study [<directory>] [<study>,<study>,...]
 If no directory is used, the default is used #{Sample.study_repo}
 
 --task* Bootstrap only one task
---cpus CPUs to use concurrently
+--cpus* CPUs to use concurrently
 -h--help Print this help
 -wd--workdir* Workdir for Workflow jobs
 EOF

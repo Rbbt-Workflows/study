@@ -49,11 +49,10 @@ if task
 end
 
 $cpus ||= options[:cpus] || 3
+$cpus = $cpus.to_i if String === $cpus
 enrichment_databases = Enrichment::DATABASES - ['interpro', 'pfam', 'pina', 'tfacts', 'biocarta', 'matador', 'kegg', 'gene_ages', 'go', 'go_bp', 'go_mf', 'go_cc', 'reactome', 'biogrid']
 
 i = 0
-
-
 Log.warn "STUDY BOOTSTRAP - #{i+=1; i}"
 Misc.bootstrap studies, [$cpus, studies.length].min, :respawn => :always do |study|
   Study.setup(study)

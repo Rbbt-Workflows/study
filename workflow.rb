@@ -58,6 +58,8 @@ module Study
   end
 end
 
+Study.update_task_properties
+
 require 'rbbt/entity/study'
 
 

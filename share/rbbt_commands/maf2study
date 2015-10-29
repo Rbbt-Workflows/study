@@ -148,44 +148,51 @@ if options[:expression]
   Log.info "Using donor_field: " << donor_field
   sample_id_tsv = TSV.open options[:sample_ids], :type => :list, :header_hash => true, :unnamed => true, :key_field => donor_field
 
-  expression_index = nil
-  matrix = nil
-  expression_index_normal = nil
+  matrix = TSV.open(options[:expression], :header_hash => true, :type => :list, :namespace => organism, :unnamed => true, :fix => Proc.new{|l| l.sub(/(ENSG\d+)\.\d/,'\1')})
+  matrix_fields = matrix.fields
+
+  expression_index = TSV.open(options[:sample_ids], :key_field => donor_field, :fields => [options[:expression_id]], :type => :single) if options[:expression_id]
+  expression_index_normal = TSV.open(options[:sample_ids], :key_field => donor_field, :fields => [options[:expression_id_normal]], :type => :single) if options[:expression_id_normal]
   TSV.traverse studies.to_a, :bar => "Traversing studies for gene expression" do |study|
     samples = study_samples[study]
     if options[:expression_id]
-      expression_index ||= sample_id_tsv.index :fields => [donor_field], :target => options[:expression_id], :merge => true
-
       sample_ids = expression_index.chunked_values_at samples.to_a
     else
       sample_ids = samples.to_a
     end
 
-    if sample_ids.compact.any?
+    sample_ids.reject!{|id| id.nil? or id == ""}
+
+    if sample_ids.any?
       sample_equivalence = {}
       samples.zip(sample_ids).each do |sample, eid|
         next if eid.nil? or eid.empty?
-        sample_equivalence[eid] = sample
+        matching_eids = matrix_fields.select{|f| eid =~ /(?:\W|^)#{f}(?:\W|$)/} 
+        Log.warn "NO matching expression column for #{ eid }" and next if matching_eids.empty?
+        raise "Several matching expression columns for #{ eid }: " << matching_eids*", " if matching_eids.length > 1
+        sample_equivalence[matching_eids.first] = sample
       end
 
-      matrix ||= TSV.open(options[:expression], :header_hash => true, :type => :list, :namespace => organism, :unnamed => true, :fix => Proc.new{|l| l.sub(/(ENSG\d+)\.\d+/,'\1')})
-      study_matrix = matrix.slice(sample_equivalence.keys & matrix.fields)
+      study_matrix = matrix.slice(sample_equivalence.keys & matrix_fields)
       study_matrix.fields = sample_equivalence.chunked_values_at study_matrix.fields
       Open.write(File.join($directory, study, 'matrices', 'gene_expression', 'data'), study_matrix.to_s)
     end
 
     if options[:expression_id_normal]
-      expression_index_normal ||= TSV.index options[:sample_ids], :fields => [donor_field], :target => options[:expression_id_normal], :merge => true
       sample_ids = expression_index_normal.chunked_values_at samples.to_a
 
-      if sample_ids.compact.any?
+      sample_ids.reject!{|id| id.nil? or id == ""}
+
+      if sample_ids.any?
         sample_equivalence = {}
         samples.zip(sample_ids).each do |sample, eid|
           next if eid.nil? or eid.empty?
-          sample_equivalence[eid] = sample
+          matching_eids = matrix_fields.select{|f| eid =~ /(?:\W|^)#{f}(?:\W|$)/} 
+          Log.warn "NO matching expression column for #{ eid }" and next if matching_eids.empty?
+          raise "Several matching expression columns for #{ eid }: " << matching_eids*", " if matching_eids.length > 1
+          sample_equivalence[matching_eids.first] = sample
         end
 
-        matrix ||= TSV.open(options[:expression], :header_hash => true, :type => :list, :namespace => organism, :unnamed => true, :fix => Proc.new{|l| l.sub(/(ENSG\d+)\.\d/,'\1')})
         study_matrix = matrix.slice(sample_equivalence.keys & matrix.fields)
         study_matrix.fields = sample_equivalence.chunked_values_at study_matrix.fields
         Open.write(File.join($directory, study, 'matrices', 'gene_expression', 'data_normal'), study_matrix.to_s)

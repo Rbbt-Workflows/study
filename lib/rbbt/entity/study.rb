@@ -102,7 +102,9 @@ module Study
   end
 
   property :samples => :single do
-    Sample.setup(Study.samples(self), self)
+    samples = Sample.setup(Study.samples(self), self)
+    samples.extend AnnotatedArray
+    samples
   end
 
   property :organism => :single do

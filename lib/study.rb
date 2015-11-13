@@ -78,7 +78,8 @@ module Study
   def self.matrix(study, matrix, format = "Ensembl Gene ID")
     file = matrix_file(study, matrix)
     sample_info = sample_info_file(study)
-    Matrix.new file.find, sample_info, :counts, format
+    value_type = study_info(study)[:expression_type]
+    Matrix.new file.find, sample_info, value_type, format
   end
 
   def self.studies

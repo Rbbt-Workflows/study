@@ -21,10 +21,12 @@ $ #{$0} <filename.maf> <directory>
 -e--end_field* End field in MAF
 -r--reference_field* Reference allele field in MAF
 -a--alternate_field* Alternative allele field in MAF
+-a2--alternate_field2* Alternative allele field in MAF 2
 -d--donor_field* Donor fieldin MAF
 -sf--study_field* Study fieldin MAF
 -si--sample_ids* Sample identifier map
--e--expression* Expression matrix file
+-exp--expression* Expression matrix file
+-et--expression_type* Expression type (options are log2, counts, fkpm, rpkm; defaults to log2 values)
 -ei--expression_id* Sample id field for expression values
 -ein--expression_id_normal* Sample id field for normal expression values
 -bl--blacklist* Blacklisted donor ids
@@ -50,6 +52,7 @@ s_field = options[:start_field] || "Start_position"
 e_field = options[:end_field] || "End_position"
 r_field = options[:reference_field] || "Reference_Allele"
 a_field = options[:alternate_field] || "Alternate_Allele"
+a2_field = options[:alternate_field2]
 d_field = options[:donor_field] || "Donor_ID"
 sf_field = options[:study_field] || "Project_Code"
 blacklist_file = options[:blacklist]
@@ -81,6 +84,11 @@ s_pos  = Misc.field_position all_fields, s_field
 e_pos  = Misc.field_position all_fields, e_field
 r_pos  = Misc.field_position all_fields, r_field
 a_pos  = Misc.field_position all_fields, a_field
+if a2_field
+  a2_pos  = Misc.field_position all_fields, a2_field
+else
+  a2_pos  = a_pos
+end
 d_pos  = Misc.field_position all_fields, d_field
 sf_pos = Misc.field_position all_fields, sf_field
 
@@ -98,27 +106,40 @@ study_samples = {}
 studies = Set.new
 all_samples = Set.new
 TSV.traverse filename, :bar => true, :type => :array do |line|
-  next if line =~ /^#?Chromosome/
-  chr, start, eend, ref, _mut, sample, study = line.split("\t").values_at c_pos, s_pos, e_pos, r_pos, a_pos, d_pos, sf_pos
+  begin
+    line = Misc.fixutf8 line
+  next if line =~ /Chromosome/
+  chr, start, eend, ref, _mut1, _mut2, sample, study = line.split("\t").values_at c_pos, s_pos, e_pos, r_pos, a_pos, a2_pos, d_pos, sf_pos
   next if blacklist.include? sample
 
   start = start.to_i
   eend = eend.to_i
 
+  _muts = ([_mut1, _mut2].compact.uniq - [ref])
+  _mut  = _muts.first
+
   pos, muts = Misc.correct_vcf_mutation start, ref, _mut
   mutations = muts.collect{|m| [chr, pos, m] * ":"}
-  stream = sample_stream(sample, study)
+
   sample_study[sample] ||= study
   study_samples[study] ||= Set.new
   study_samples[study].add sample
   studies.add study
   all_samples.add sample
+
+  stream = sample_stream(sample, study)
+
   stream.puts mutations * "\n"
   stream.close
+  rescue
+    iii line
+    raise $!
+  end
 end
 
 # ADD METADATA
 metadata_all = {:organism => organism, :watson => watson, :exome => exome, :users => users}
+metadata_all[:expression_type] = options[:expression_type] if options[:expression_type]
 map_file = options[:mappable_regions]
 studies.each do |study|
   metadata = metadata_all.dup
@@ -148,7 +169,7 @@ if options[:expression]
   Log.info "Using donor_field: " << donor_field
   sample_id_tsv = TSV.open options[:sample_ids], :type => :list, :header_hash => true, :unnamed => true, :key_field => donor_field
 
-  matrix = TSV.open(options[:expression], :header_hash => true, :type => :list, :namespace => organism, :unnamed => true, :fix => Proc.new{|l| l.sub(/(ENSG\d+)\.\d/,'\1')})
+  matrix = TSV.open(options[:expression], :header_hash => true, :type => :list, :namespace => organism, :unnamed => true, :fix => Proc.new{|l| l.sub(/(ENSG\d+)\.\d+/,'\1')})
   matrix_fields = matrix.fields
 
   expression_index = TSV.open(options[:sample_ids], :key_field => donor_field, :fields => [options[:expression_id]], :type => :single) if options[:expression_id]

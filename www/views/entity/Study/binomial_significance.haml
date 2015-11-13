@@ -11,5 +11,6 @@
     exceeds the expected number.
 
 = action_card_render action_card do
-  = table :page => "1~p.value" do
-    - study.job(:binomial_significance, :mutations => study.metagenotype).run
+  = table :table_id => "Binomial significance #{study}", :page => "1~p.value" do
+    - job = study.job(:binomial_significance, :mutations => study.metagenotype)
+    - job.run

@@ -101,7 +101,6 @@ Misc.bootstrap studies, 2, :respawn => :always do |study|
     next if database == 'interpro'
     job = study.recurrent_gene_enrichment(:job, :database => database)
     job.produce
-    #study.mutation_enrichment(true, :database => database)
     
     nil
   end

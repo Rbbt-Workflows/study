@@ -1,0 +1,32 @@
+- study = entity
+
+- action_card = ActionCard.new
+
+- action_card.description do
+
+  :markdown
+    Incidence matrix for samples and genes
+
+= action_card_render action_card do
+
+  - log :affected, "Affected incidence"
+  - index = study.knowledge_base.get_index(:sample_genes).reverse
+
+  %h2 Affected-gene incidence
+  = table do
+    - good_keys = index.filter :affected
+
+    - matrix = AssociationItem.incidence good_keys
+    - matrix.key_field = "Ensembl Gene ID"
+    - matrix.namespace = study.organism
+    - matrix
+
+  %h2 Damaged-gene incidence
+  = table do
+    - good_keys = index.filter :damaged_mutated_isoform
+
+    - matrix = AssociationItem.incidence good_keys
+    - matrix.key_field = "Ensembl Gene ID"
+    - matrix.namespace = study.organism
+    - matrix
+

@@ -20,6 +20,7 @@ module Study
 
   def cohort
     @cohort ||= genotyped_samples.collect do |sample| 
+      Sample.setup(sample, :cohort => self)
       genomic_mutations = sample.genomic_mutations
       GenomicMutation.setup(genomic_mutations, sample, organism, watson)
     end.compact

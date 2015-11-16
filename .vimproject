@@ -49,6 +49,7 @@ Study=/$PWD filter="*.rb *.R *.js *.sass *.haml *.tsv" {
     Study=Study{
      binomial_significance.haml
      count_tables.haml
+     sample_gene_incidence.haml
      gene_list_report.haml
      gene_report.haml
      mutation_list_report.haml

@@ -55,6 +55,8 @@ Study=/$PWD filter="*.rb *.R *.js *.sass *.haml *.tsv" {
      mutation_list_report.haml
      mutation_report.haml
      gene_damage_bias.haml
+     interface_report.haml
+     hallmark_report.haml
     }
     Gene=Gene{
      study_report.haml

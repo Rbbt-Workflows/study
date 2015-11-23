@@ -221,11 +221,10 @@ CohortTasks = Proc.new do
   dep :interfaces
   dep :mutation_incidence
   dep :genomic_mutation_consequence
-  dep :genotyped_samples
   task :firestar_analysis => :tsv do
     Step.wait_for_jobs dependencies
     ns_mis = Set.new step(:mi).load
-    num_samples = step(:genotyped_samples).load.length
+    num_samples = study.genotyped_samples.length
     firestar = step(:firestar).path.tsv :fields => ["Firestar site"], :type => :flat
     firestar_neighbours = step(:firestar_neighbours).path.tsv :fields => ["Firestar neighbour site"], :type => :flat
     interfaces = step(:interfaces).path.tsv :fields => ["Partner Ensembl Protein ID"], :type => :flat
@@ -318,6 +317,9 @@ data$p.value = apply(data,1,function(v){
 data
     EOF
 
+    feature_info.type = :double
+    feature_info.key_field = "Firestar feature"
+    feature_info.fields = feature_info.fields.collect{|f| f.gsub('p.value', 'p-value').gsub('.',' ') }
     Open.write(file('feature_info'), feature_info.to_s)
 
     nfeature_info = {}
@@ -354,5 +356,85 @@ data
     EOF
     R::SVG.ggplotSVG(feature_info, script, 10, 10, :R_open => 'na.string=NULL')
   end
+
+  dep :broken_ppi
+  dep :mutation_incidence
+  dep :genomic_mutation_consequence
+  task :broken_ppi_incidence => :tsv do
+    Step.wait_for_jobs dependencies
+    consequence = step(:genomic_mutation_consequence).path.index :target => "Genomic Mutation"
+    incidence = step(:mutation_incidence).load
+    consequence.unnamed = true
+    incidence.unnamed = true
+    dumper = TSV::Dumper.new :key_field => "Sample", :fields => ["PPI Pair"], :type => :double, :namespace => organism
+    dumper.init
+    TSV.traverse step(:broken_ppi), :into => dumper do |mi,values|
+      mi = mi.first if Array === mi
+      mutations = consequence[mi]
+      source,target = values
+      samples = incidence.values_at *mutations
+      res = samples.flatten.collect{|sample|
+        [sample, [[source, target] * "~"]]
+      }
+      res.extend MultipleResult
+      res
+    end
+
+    Misc.collapse_stream dumper.stream
+  end
+
+  dep :firestar
+  dep :genomic_mutation_consequence
+  dep :mutation_incidence
+  task :firestar_incidence => :tsv do
+    Step.wait_for_jobs dependencies
+    consequence = step(:genomic_mutation_consequence).path.index :target => "Genomic Mutation"
+    incidence = step(:mutation_incidence).load
+    consequence.unnamed = true
+    incidence.unnamed = true
+    dumper = TSV::Dumper.new :key_field => "Sample", :fields => ["Firestar feature"], :type => :double, :namespace => organism
+    dumper.init
+    TSV.traverse step(:firestar), :into => dumper do |mi,values|
+      mi = mi.first if Array === mi
+      mutations = consequence[mi]
+      feature, range = values
+      samples = incidence.values_at *mutations
+      protein = mi.partition(":").first
+      res = samples.flatten.collect{|sample|
+        [sample, [[protein, feature] * ":"]]
+      }
+      res.extend MultipleResult
+      res
+    end
+
+    Misc.collapse_stream dumper.stream
+  end
+
+  dep :kinmut
+  dep :genomic_mutation_consequence
+  dep :mutation_incidence
+  task :kinmut_incidence => :tsv do
+    consequence = step(:genomic_mutation_consequence).path.index :target => "Genomic Mutation"
+    incidence = step(:mutation_incidence).load
+    consequence.unnamed = true
+    incidence.unnamed = true
+    dumper = TSV::Dumper.new :key_field => "Sample", :fields => ["Firestar feature"], :type => :double, :namespace => organism
+    dumper.init
+    TSV.traverse step(:kinmut), :into => dumper do |mi,values|
+      mi = mi.first if Array === mi
+      mutations = consequence[mi]
+      prediction = values.first
+      samples = incidence.values_at *mutations
+      protein = mi.partition(":").first
+      res = samples.flatten.collect{|sample|
+        [sample, [[protein, prediction] * ":"]]
+      }
+      res.extend MultipleResult
+      res
+    end
+
+    Misc.collapse_stream dumper.stream
+  end
+
 
 end

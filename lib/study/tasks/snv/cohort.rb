@@ -100,10 +100,9 @@ CohortTasks = Proc.new do
   end
 
   dep :sample_genes
-  dep :genotyped_samples
   input :recurrent_threshold, :float, "Proportion of samples with gene affected (e.g. 0.05 for 5%)", 0.05
   task :recurrent_genes => :array do |recurrent_threshold|
-    threshold_count = (recurrent_threshold.to_f * step(:genotyped_samples).load.length).ceil
+    threshold_count = (recurrent_threshold.to_f * study.genotyped_samples.length).ceil
     threshold_count = 2 if threshold_count < 2
     TSV.traverse step(:sample_genes), :type => :array, :into => :stream do |line|
       next if line =~ /^#/

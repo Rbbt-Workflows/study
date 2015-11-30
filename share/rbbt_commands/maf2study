@@ -132,7 +132,6 @@ TSV.traverse filename, :bar => true, :type => :array do |line|
   stream.puts mutations * "\n"
   stream.close
   rescue
-    iii line
     raise $!
   end
 end
@@ -148,20 +147,6 @@ studies.each do |study|
   FileUtils.cp map_file, File.join($directory, study, 'mappable_regions') if map_file
 end
 
-
-
-#if metadata_file
-#
-#  metadata = Path.setup(File.expand_path(metadata_file)).yaml
-#
-#  Dir.glob(File.join($directory, '*')).each do |study|
-#    study_name = File.basename study
-#    Open.write(File.join(study, 'metadata.yaml'), metadata.merge(:condition => study_name).to_yaml)
-#  end
-#end
-
-
-
 # ADD EXPRESSION
 if options[:expression]
   donor_field, count = TSV.guess_id options[:sample_ids], all_samples.to_a, :header_hash => true, :persist_update => true
@@ -170,6 +155,9 @@ if options[:expression]
   sample_id_tsv = TSV.open options[:sample_ids], :type => :list, :header_hash => true, :unnamed => true, :key_field => donor_field
 
   matrix = TSV.open(options[:expression], :header_hash => true, :type => :list, :namespace => organism, :unnamed => true, :fix => Proc.new{|l| l.sub(/(ENSG\d+)\.\d+/,'\1')})
+  #matrix.key_field = "Ensembl Gene ID"
+  found = Organism.guess_id(organism, matrix.keys)
+  matrix.key_field = found.first if found
   matrix_fields = matrix.fields
 
   expression_index = TSV.open(options[:sample_ids], :key_field => donor_field, :fields => [options[:expression_id]], :type => :single) if options[:expression_id]

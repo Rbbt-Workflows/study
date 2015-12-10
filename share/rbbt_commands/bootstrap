@@ -84,7 +84,7 @@ Misc.bootstrap studies, [$cpus, studies.length].min, :respawn => :always do |stu
   job = study.firestar(:job)
   job.produce
 
-  next if study == "PANCANCER"
+  next if study.include? "PANCANCER"
   job = study.kinmut(:job)
   job.produce
 
@@ -157,7 +157,7 @@ end
 Log.warn "STUDY BOOTSTRAP - #{i+=1; i}"
 Misc.bootstrap studies, 1, :respawn => :always do |study|
   Study.setup(study)
-  next if study == "PANCANCER"
+  next if study.include? "PANCANCER"
   job = study.mut_sig(:job)
   job.produce
 end
@@ -165,7 +165,7 @@ end
 Log.warn "STUDY BOOTSTRAP - #{i+=1; i}"
 Misc.bootstrap studies, $cpus, :respawn => :always do |study|
   Study.setup(study)
-  next if study == "PANCANCER"
+  next if study.include? "PANCANCER"
 
   job = study.mut_sig_significant(:job)
   job.produce
@@ -183,7 +183,7 @@ end
 Log.warn "STUDY BOOTSTRAP - #{i+=1; i}"
 Misc.bootstrap studies, 1, :respawn => :always do |study|
   Study.setup(study)
-  next if study == "PANCANCER"
+  next if study.include? "PANCANCER"
 
   Misc.bootstrap enrichment_databases, 1, :respawn => :always do |database|
     job = study.mut_sig_rank_enrichment(:job, :database => database)

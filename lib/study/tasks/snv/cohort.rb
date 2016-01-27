@@ -1,3 +1,6 @@
+Workflow.require_workflow "MutationSignatures"
+require 'study/tasks/mutation_signatures'
+
 CohortTasks = Proc.new do
 
   helper :feature_WGS_residues do
@@ -433,6 +436,28 @@ data
     end
 
     Misc.collapse_stream dumper.stream
+  end
+
+  dep Study, :genomic_mutation_consequence do |jobname, options|
+    Study.job(:genomic_mutation_consequence, jobname, {:principal => true}.merge(options))
+  end
+  dep :mutation_incidence
+  task :kinase_sample_mutations => :tsv do 
+    Workflow.require_workflow "KinMut2"
+    require 'kinase'
+    kinases_uni = KinMut2.all_kinases
+    kinases_ensembl = Organism.identifiers(organism).tsv(:key_field => "UniProt/SwissProt Accession", :fields => ["Ensembl Protein ID"], :type => :flat, :persist => true).chunked_values_at(kinases_uni).flatten
+    incidence = step(:mutation_incidence).load
+    dumper = TSV::Dumper.new :key_field => "Genomic Mutation", :fields => ["Mutated Isoform", "Sample"], :namespace => organism, :type =>:double
+    dumper.init
+    TSV.traverse step(:genomic_mutation_consequence), :into => dumper do |mut,mis|
+      next if mis.nil?
+      kmis = mis.select{|mi| kinases_ensembl.include? mi.partition(":").first}
+      next if kmis.empty?
+      samples = incidence[mut]
+
+      [mut, [mis, samples]]
+    end
   end
 
 

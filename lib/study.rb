@@ -42,6 +42,11 @@ module Study
     path.genotypes.glob("*").collect{|f| File.basename f }
   end
 
+  def self.cnv_samples(study)
+    path = find_study(study)
+    path.CNV.glob("*").collect{|f| File.basename(f) }
+  end
+
   def self.sample_info_file(study)
     find_study(study).samples
   end

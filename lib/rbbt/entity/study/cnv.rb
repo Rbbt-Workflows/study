@@ -1,5 +1,9 @@
 module Study
+  def cnv_samples
+    samples.select{|s| s.has_cnv?}
+  end
+
   def has_cnv?
-    samples.select{|s| s.has_cnv?}.any?
+    cnv_samples.any?
   end
 end

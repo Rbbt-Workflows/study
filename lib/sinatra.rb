@@ -15,10 +15,18 @@ helpers do
 end
 
 Misc.bootstrap(Study.studies, 3) do |study|
-  Study.setup(study).knowledge_base
+  begin
+    Study.setup(study).knowledge_base
+  rescue
+    Log.warn $!.message
+  end
 end
 
 TSV.traverse Study.studies, :bar => "Registering study KBs" do |study|
-  KnowledgeBaseRESTHelpers.add_syndication study, Study.setup(study).knowledge_base
+  begin
+    KnowledgeBaseRESTHelpers.add_syndication study, Study.setup(study).knowledge_base
+  rescue
+    Log.warn $!.message
+  end
 end
 

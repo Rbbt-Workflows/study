@@ -73,10 +73,11 @@ module Study
 
 
   MISSING = "MISSING"
-  dep :organism
-  dep :genomic_mutations
-  dep :mutation_incidence
+  dep :sequence_ontology
   dep :genomic_mutation_consequence
+  dep :mutation_incidence
+  dep :genomic_mutations
+  dep :organism
   dep Sequence, :reference, :positions => :genomic_mutations, :organism => :organism
   task :maf_file => :text do
 
@@ -84,11 +85,11 @@ module Study
     ensp2ensg = Organism.transcripts(organism).index :target => "Ensembl Gene ID", :fields => ["Ensembl Protein ID"], :persist => true, :unnamed => true
     enst2ensg = Organism.transcripts(organism).index :target => "Ensembl Gene ID", :fields => ["Ensembl Transcript ID"], :persist => true, :unnamed => true
     gene_strand = Organism.gene_positions(organism).tsv :fields => ["Strand"], :type => :single, :persist => true, :unnamed => true
-    pasted = TSV.paste_streams([step(:reference), step(:mutation_incidence), step(:genomic_mutation_consequence)])
+    pasted = TSV.paste_streams([step(:reference), step(:mutation_incidence), step(:sequence_ontology)])
     dumper = TSV::Dumper.new :key_field => "Hugo_Symbol", :fields => MAF_FIELDS, :type => :list
-    dumper.init
+    dumper.init(:header_hash => "", :preamble => false)
     TSV.traverse pasted, :type => :double, :into => dumper do |mutation,values|
-      reference, samples, mis = values
+      reference, samples, mis, mut_term, mi_term, so_term = values
 
       mutation = mutation.first if Array === mutation
       reference = reference.first if Array === reference
@@ -108,7 +109,8 @@ module Study
 
       type = allele.length == 1 ? "SNP" : (allele[0] == '+' ? "INS" : "DEL")
 
-      classification = Study.mutation_classification(mis, type)
+      #classification = Study.mutation_classification(mis, type)
+      classification = so_term.first
 
       center = ""
       build = ""

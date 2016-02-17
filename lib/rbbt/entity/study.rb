@@ -119,6 +119,7 @@ module Study
 end
 
 require 'rbbt/entity/study/genotypes'
+require 'rbbt/entity/study/cnv'
 
 if defined? Sample and Entity === Sample
   module Sample

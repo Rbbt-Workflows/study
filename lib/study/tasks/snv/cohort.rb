@@ -207,7 +207,7 @@ CohortTasks = Proc.new do
   dep :organism
   dep :genomic_mutations
   dep :num_genotyped_samples
-  dep Sequence, :binomial_significance, :organism => :organism, :mutations => :genomic_mutations, :exome => true, :num_samples => :num_genotyped_samples
+  dep Sequence, :binomial_significance, :organism => :organism, :mutations => :genomic_mutations, :exome => true, :num_samples => :num_genotyped_samples, :vcf => false
   task :binomial_significance => :tsv do
     Step.wait_for_jobs dependencies
     TSV.get_stream step(:binomial_significance)
@@ -215,7 +215,7 @@ CohortTasks = Proc.new do
 
   dep :organism
   dep :genomic_mutations
-  dep Sequence, :binomial_significance, :organism => :organism, :mutations => :genomic_mutations, :exome => :exome
+  dep Sequence, :binomial_significance, :organism => :organism, :mutations => :genomic_mutations, :exome => :exome, :vcf => false
   task :binomial_significance_all => :tsv do
     Step.wait_for_jobs dependencies
     TSV.get_stream step(:binomial_significance)

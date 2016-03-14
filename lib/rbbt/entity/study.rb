@@ -24,12 +24,30 @@ module Study
     Study.matrices(self)
   end
 
-  def matrix(*args)
-    Study.matrix(self, *args)
+  def has_matrix?(name)
+    matrices.include? name
+  end
+
+  def matrix(matrix, *rest)
+    Study.matrix(self, matrix, *rest)
   end
 
   def match_samples(list)
-    sample_info.index(:target => "Sample").values_at *list
+    target_field, count = TSV.guess_id sample_info, list
+    target_field = "Sample" if target_field.nil?
+    sample_info.index(:target => target_field).values_at *list
+  end
+
+  def match_samples(list, target_list, through_field = nil)
+    return list if (list & target_list).any?
+    source_field, count = TSV.guess_id sample_info, list
+    target_field, count = TSV.guess_id sample_info, target_list
+    if through_field
+      tmp = sample_info.index(:target => through_field).values_at *list
+      sample_info.index(:target => target_field).values_at *tmp
+    else
+      sample_info.index(:target => target_field).values_at *list
+    end
   end
 
   def knowledge_base
@@ -93,6 +111,11 @@ module Study
     Study.sample_info(self)
   end
 
+  property :sample_extended_info => :single do
+    Study.sample_extended_info(self)
+  end
+
+
   property :metadata => :single do
     study_info
   end
@@ -145,6 +168,10 @@ if defined? Gene and Entity === Gene
     property :damage_bias_in_study => :array do |study|
       db = Study.setup(study).gene_damage_bias
       db.chunked_values_at(self).collect{|values| values.nil? ? nil : values.last}
+    end
+
+    property :in_study_property => :array2single do |study,property,*args|
+      Study.setup(study.dup).send(property, *args).chunked_values_at self
     end
   end
 end

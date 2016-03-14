@@ -22,10 +22,16 @@
       %dt CNV samples
       %dd= samples.list_link :length, "CNV samples in #{ study }"
 
-    - if study.respond_to?(:matrices) and study.matrices.include? "gene_expression"
-      - samples = study.samples.select{|s| s.has_gene_expression? }
-      %dt Gene expression samples
-      %dd= samples.list_link :length, "Gene expression samples in #{ study }"
+    - if study.respond_to?(:matrices) and study.matrices.any?
+      %dt Matrices
+      %dd
+        %dl
+          - study.matrices.each do |matrix|
+            %dt #{matrix} samples
+            %dd= Sample.setup(study.matrix(matrix).samples.dup, study).list_link :length, "Samples in #{study} matrix #{matrix}"
+
+
+
 
 - entity_card.description do
 
@@ -122,8 +128,8 @@
             - matches = study.knowledge_base.subset(:sample_genes, :all)
             - matches.tsv
 
-    %hr.ui.divider
-    .row
+    -#%hr.ui.divider
+    -#.row
       .mutation_details
         = fragment do
           - mutation_info = study.mutation_info

@@ -25,7 +25,7 @@
       %dd= matches.source_entity.list_link :length, "All mutations over #{ name } in #{ study }"
 
       %dt Relevant mutations
-      %dd= matches.select{|item| item.info.select{|k,v| v.to_s == "true" }.any? }.source_entity.uniq.list_link :length, "Relevant mutations (uniq) over #{ name } in #{ study }"
+      %dd= matches.select{|item| item.info["affected"].to_s == "true" }.source_entity.uniq.list_link :length, "Relevant mutations (uniq) over #{ name } in #{ study }"
 
       %dt Damaging mutations
       %dd= matches.select{|item| item.info["broken"].to_s == "true" }.source_entity.uniq.list_link :length, "Damaging mutations (uniq) over #{ name } in #{ study }"
@@ -42,7 +42,7 @@
       %dd= matches.source_entity.uniq.list_link :length, "Samples with mutations over #{ name } in #{ study }"
 
       %dt Samples affected
-      %dd= matches.select{|item| item.info.select{|k,v| v.to_s == "true" }.any? }.source_entity.uniq.list_link :length, "Samples with relevant mutations over #{ name } in #{ study }"
+      %dd= matches.select{|item| item.info["affected"].to_s == "true" }.source_entity.uniq.list_link :length, "Samples with relevant mutations over #{ name } in #{ study }"
 
       %dt Samples damaged
       %dd= matches.select{|item| item.info["broken"].to_s == "true" }.source_entity.uniq.list_link :length, "Samples with damaging mutations over #{ name } in #{ study }"
@@ -53,7 +53,7 @@
       %dd= matches.target_entity.uniq.list_link :length, "Genes in #{ name } overlapping mutations in #{ study }"
 
       %dt Genes affected
-      %dd= matches.select{|item| item.info.select{|k,v| v.to_s == "true" }.any? }.target_entity.uniq.list_link :length, "Genes in #{ name } affected by mutations in #{ study }"
+      %dd= matches.select{|item| item.info["affected"].to_s == "true" }.target_entity.uniq.list_link :length, "Genes in #{ name } affected by mutations in #{ study }"
 
       %dt Genes damaged
       %dd= matches.select{|item| item.info["broken"].to_s == "true" }.target_entity.uniq.list_link :length, "Genes in #{ name } damaged by in #{ study }"

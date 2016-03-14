@@ -55,11 +55,30 @@ module Study
     path = sample_info_file(study)
     organism = study_info(study)[:organism]
 
-    return path.tsv :namespace => organism if path.exists?
-    samples = genotyped_samples(study)
-    tsv = TSV.setup(samples, :key_field => "Sample", :fields => [], :type => :list, :namespace => organism)
-    tsv.entity_options = {:cohort => study, :organism => organism}
-    tsv
+    if path.exists?
+      tsv = path.tsv :namespace => organism 
+      tsv.entity_options = {:cohort => study, :organism => organism}
+      tsv
+    else
+      samples = genotyped_samples(study)
+      tsv = TSV.setup(samples, :key_field => "Sample", :fields => [], :type => :list, :namespace => organism)
+      tsv.entity_options = {:cohort => study, :organism => organism}
+      tsv
+    end
+  end
+
+  def self.sample_extended_info_files(study)
+    find_study(study).glob('sample_*') + 
+    find_study(study).glob('donor_*')  
+  end
+
+  def self.sample_extended_info(study)
+    sample_extended_info = sample_info(study)
+    return nil if sample_extended_info_files(study).nil?
+    sample_extended_info_files(study).each do |file|
+      sample_extended_info = sample_extended_info.attach file
+    end
+    sample_extended_info
   end
 
   def self.organism(study)
@@ -80,7 +99,7 @@ module Study
     path.matrices[matrix.to_s].data
   end
 
-  def self.matrix(study, matrix, format = "Ensembl Gene ID")
+  def self.matrix(study, matrix, format = nil)
     file = matrix_file(study, matrix)
     sample_info = sample_info_file(study)
     value_type = study_info(study)[:expression_type]

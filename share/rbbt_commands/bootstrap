@@ -17,6 +17,7 @@ If no directory is used, the default is used #{Sample.study_repo}
 --task* Bootstrap only one task
 --cpus* CPUs to use concurrently
 -h--help Print this help
+-W--workflows* Load workflows (comma separated)
 -wd--workdir* Workdir for Workflow jobs
 EOF
 
@@ -24,6 +25,12 @@ Workflow.workdir = options[:workdir] if options[:workdir]
 
 Workflow.require_workflow "Study"
 Workflow.require_workflow "MutSig"
+
+if options[:workflows]
+  options[:workflows].split(",").each do |workflow|
+    Workflow.require_workflow workflow.strip
+  end
+end
 
 rbbt_usage and exit 0 if options[:help]
 

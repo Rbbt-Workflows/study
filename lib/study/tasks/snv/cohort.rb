@@ -261,6 +261,22 @@ CohortTasks = Proc.new do
     CMD.cmd("env LC_ALL=C sort -k #{field_pos + 1} -g '#{step(:binomial_significance).path}' | cut -f 1", :pipe => true)
   end
 
+  dep :gene_damage_bias
+  input :threshold, :float, "P-value threshold", 0.05
+  task :damage_biased_genes => :array do |threshold|
+    TSV.traverse step(:gene_damage_bias), :into => :stream do |gene,values|
+      next unless values[-1].to_f <= threshold
+      gene
+    end
+  end
+
+  dep :gene_damage_bias
+  task :sorted_damage_biased_genes => :array do |threshold|
+    Step.wait_for_jobs dependencies
+    field_pos = TSV.parse_header(step(:gene_damage_bias).path).all_fields.index "p.value"
+    CMD.cmd("env LC_ALL=C sort -k #{field_pos + 1} -g '#{step(:gene_damage_bias).path}' | cut -f 1", :pipe => true)
+  end
+
   task :mappable_genes => :array do |threshold|
     mappable_regions_file = Study.find_study(study).mappable_regions
     if mappable_regions_file.exists?
@@ -316,6 +332,25 @@ CohortTasks = Proc.new do
   task :significance_rank_enrichment => :tsv do
     TSV.get_stream step(:rank_enrichment)
   end
+
+  dep :organism
+  dep :damage_biased_genes
+  dep :mappable_genes
+  dep Enrichment, :enrichment, :organism => :organism, :list => :damage_biased_genes, :background => :mappable_genes
+  input :database, :string, "Database to use", nil, :select_options => Enrichment::DATABASES
+  task :damage_biased_gene_enrichment => :tsv do
+    TSV.get_stream step(:enrichment)
+  end
+
+  dep :organism
+  dep :sorted_damage_biased_genes
+  dep :mappable_genes
+  dep Enrichment, :rank_enrichment, :organism => :organism, :list => :sorted_damage_biased_genes, :background => :mappable_genes, :permutations => 100_000
+  input :database, :string, "Database to use", nil, :select_options => Enrichment::DATABASES
+  task :damage_bias_rank_enrichment => :tsv do
+    TSV.get_stream step(:rank_enrichment)
+  end
+
 
 
   dep :mi
@@ -559,6 +594,63 @@ data
 
       [mut, [mis, samples]]
     end
+  end
+
+  dep :organism
+  dep :genomic_mutations
+  dep :mutation_incidence
+  dep :sequence_ontology, :principal => true
+  dep :annotate_DbSNP
+  dep :mi_damaged
+  dep Sequence, :genes, :positions => :genomic_mutations, :organism => :organism
+  dep Sequence, :type, :mutations => :genomic_mutations, :organism => :organism
+  task :mutation_extended_summary => :tsv do
+    Step.wait_for_jobs dependencies
+
+    damaged = step(:mi_damaged).load
+
+    all_fields = TSV.parse_header(step(:annotate_DbSNP)).all_fields
+    fields = ["CAF", "RS ID"]
+    pos = fields.collect{|f| all_fields.index(f) + 1 }
+    pos.unshift 1
+    pos.unshift 3
+
+    io = TSV.paste_streams [step(:mutation_incidence), step(:type), step(:genes), step(:sequence_ontology),CMD.cmd("cut -f #{pos * ","} '#{step(:annotate_DbSNP).path}'", :pipe => true)] , :fix_flat => true
+
+    io2 = TSV.traverse io, :type => :array, :into => :stream do |line|
+      begin
+        if line =~ /^#/
+          mut, sample, type, genes, mi, mi_so, mut_so, so, rsid, orig, caf  = line.split("\t")
+          [mut, sample, type, genes, mi, mi_so, mut_so, so, rsid, "Original Mutation", caf, "Mutated Allele Frequency", "Damaged"] * "\t"
+        else
+          mut, sample, type, genes, mi, mi_so, mut_so, so, rsid, orig, caf  = line.split("\t")
+
+          if caf and not caf.empty?
+            alt = mut.split(":")[2]
+            oalt = orig.split(":")[2].split(",")
+            apos = oalt.index(alt)
+
+            maf = apos.nil? ? "-" : caf.split(",")[apos+1]
+
+          else
+            maf = ""
+          end
+
+          if mi and not mi.empty?
+            damaged = mi.split("|").collect{|m| damaged.include?(mi).to_s} * "|"
+          else
+            damaged = ""
+          end
+
+          [mut, sample, mi, mi_so, mut_so, so, orig, rsid, caf, maf, damaged] * "\t"
+        end
+      rescue
+        Log.exception $!
+        raise $!
+      end
+    end
+
+    io2
   end
 
 end

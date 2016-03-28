@@ -157,6 +157,11 @@ Misc.bootstrap studies, [$cpus, studies.length].min, :respawn => :always do |stu
 
   job = study.gene_damage_bias(:job)
   job.produce
+  Misc.bootstrap enrichment_databases, 2, :respawn => :always do |database|
+    job = study.damaged_bias_enrichment(:job, :database => database)
+    job.produce
+    nil
+  end
   nil
 end
 
@@ -201,6 +206,7 @@ Misc.bootstrap studies, 1, :respawn => :always do |study|
   Log.warn "STUDY BOOTSTRAP - " + study
   nil
 end
+
 Log.warn "STUDY BOOTSTRAP - #{i+=1; i}"
 Misc.bootstrap studies, 1, :respawn => :always do |study|
   Study.setup(study)

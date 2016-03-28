@@ -327,7 +327,7 @@ CohortTasks = Proc.new do
   dep :organism
   dep :sorted_significant_genes
   dep :mappable_genes
-  dep Enrichment, :rank_enrichment, :organism => :organism, :list => :sorted_significant_genes, :background => :mappable_genes, :permutations => 100_000
+  dep Enrichment, :rank_enrichment, :organism => :organism, :list => :sorted_significant_genes, :background => :mappable_genes, :permutations => 50_000
   input :database, :string, "Database to use", nil, :select_options => Enrichment::DATABASES
   task :significance_rank_enrichment => :tsv do
     TSV.get_stream step(:rank_enrichment)
@@ -345,7 +345,7 @@ CohortTasks = Proc.new do
   dep :organism
   dep :sorted_damage_biased_genes
   dep :mappable_genes
-  dep Enrichment, :rank_enrichment, :organism => :organism, :list => :sorted_damage_biased_genes, :background => :mappable_genes, :permutations => 100_000
+  dep Enrichment, :rank_enrichment, :organism => :organism, :list => :sorted_damage_biased_genes, :background => :mappable_genes, :permutations => 50_000
   input :database, :string, "Database to use", nil, :select_options => Enrichment::DATABASES
   task :damage_bias_rank_enrichment => :tsv do
     TSV.get_stream step(:rank_enrichment)
@@ -620,8 +620,12 @@ data
     io2 = TSV.traverse io, :type => :array, :into => :stream do |line|
       begin
         if line =~ /^#/
-          mut, sample, type, genes, mi, mi_so, mut_so, so, rsid, orig, caf  = line.split("\t")
-          [mut, sample, type, genes, mi, mi_so, mut_so, so, rsid, "Original Mutation", caf, "Mutated Allele Frequency", "Damaged"] * "\t"
+          if line =~ /^#:/
+            line
+          else
+            mut, sample, type, genes, mi, mi_so, mut_so, so, rsid, orig, caf  = line.split("\t")
+            [mut, sample, type, genes, mi, "Damaged", mi_so, mut_so, so, rsid, "Original Mutation", caf, "Mutated Allele Frequency"] * "\t"
+          end
         else
           mut, sample, type, genes, mi, mi_so, mut_so, so, rsid, orig, caf  = line.split("\t")
 
@@ -642,7 +646,7 @@ data
             damaged = ""
           end
 
-          [mut, sample, mi, mi_so, mut_so, so, orig, rsid, caf, maf, damaged] * "\t"
+          [mut, sample, type, genes, mi, damaged, mi_so, mut_so, so, orig, rsid, caf, maf] * "\t"
         end
       rescue
         Log.exception $!

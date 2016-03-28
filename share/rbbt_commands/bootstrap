@@ -136,14 +136,59 @@ Misc.bootstrap studies, 3, :respawn => :always do |study|
   nil
 end
 
+
+#{{{ DRIVERS
+
 Log.warn "STUDY BOOTSTRAP - #{i+=1; i}"
 Misc.bootstrap studies, 2, :respawn => :always do |study|
   Study.setup(study)
+
   job = study.binomial_significance(:job)
   job.produce
+  nil
+end
+
+Log.warn "STUDY BOOTSTRAP - #{i+=1; i}"
+Misc.bootstrap studies, [$cpus, studies.length].min, :respawn => :always do |study|
+  Study.setup(study)
+
+  job = study.gene_damage_bias(:job)
+  job.produce
+  nil
+end
+
+
+#{{{ DRIVER PATHWAYS
+
+Log.warn "STUDY BOOTSTRAP - #{i+=1; i}"
+Misc.bootstrap studies, 2, :respawn => :always do |study|
+  Study.setup(study)
 
   Misc.bootstrap enrichment_databases, 2, :respawn => :always do |database|
     job = study.significant_gene_enrichment(:job, :database => database)
+    job.produce
+    nil
+  end
+  Log.warn "STUDY BOOTSTRAP - " + study
+  nil
+end
+
+Log.warn "STUDY BOOTSTRAP - #{i+=1; i}"
+Misc.bootstrap studies, [$cpus, studies.length].min, :respawn => :always do |study|
+  Study.setup(study)
+
+  Misc.bootstrap enrichment_databases, 2, :respawn => :always do |database|
+    job = study.damage_biased_gene_enrichment(:job, :database => database)
+    job.produce
+    nil
+  end
+  nil
+end
+
+Log.warn "STUDY BOOTSTRAP - #{i+=1; i}"
+Misc.bootstrap studies, 2, :respawn => :always do |study|
+  Study.setup(study)
+  Misc.bootstrap enrichment_databases, 2, :respawn => :always do |database|
     job = study.significance_rank_enrichment(:job, :database => database)
     job.produce
     nil
@@ -156,16 +201,15 @@ Log.warn "STUDY BOOTSTRAP - #{i+=1; i}"
 Misc.bootstrap studies, [$cpus, studies.length].min, :respawn => :always do |study|
   Study.setup(study)
 
-  job = study.gene_damage_bias(:job)
-  job.produce
   Misc.bootstrap enrichment_databases, 2, :respawn => :always do |database|
-    job = study.damage_biased_gene_enrichment(:job, :database => database)
     job = study.damage_bias_rank_enrichment(:job, :database => database)
     job.produce
     nil
   end
   nil
 end
+
+#{{{ GENOMIC MUTATION ANNOTATIONS
 
 
 Log.warn "STUDY BOOTSTRAP - #{i+=1; i}"
@@ -178,6 +222,8 @@ Misc.bootstrap studies, 1, :respawn => :always do |study|
   Log.warn "STUDY BOOTSTRAP - " + study
   nil
 end
+
+#{{{ SAMPLE ENRICHMENT
 
 Log.warn "STUDY BOOTSTRAP - #{i+=1; i}"
 Misc.bootstrap studies, 2, :respawn => :always do |study|
@@ -193,6 +239,7 @@ Misc.bootstrap studies, 2, :respawn => :always do |study|
   nil
 end
 
+#{{{ MUTSIG
 
 Log.warn "STUDY BOOTSTRAP - #{i+=1; i}"
 Misc.bootstrap studies, 1, :respawn => :always do |study|
@@ -206,9 +253,6 @@ Log.warn "STUDY BOOTSTRAP - #{i+=1; i}"
 Misc.bootstrap studies, $cpus, :respawn => :always do |study|
   Study.setup(study)
   next if study.include? "PANCANCER"
-
-  job = study.mut_sig_significant(:job)
-  job.produce
 
   Misc.bootstrap enrichment_databases, 2, :respawn => :always do |database|
     job = study.mut_sig_significant_enrichment(:job, :database => database)

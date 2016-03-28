@@ -74,7 +74,8 @@ module Study
 
   def self.sample_extended_info(study)
     sample_extended_info = sample_info(study)
-    return nil if sample_extended_info_files(study).nil?
+    extended_files = sample_extended_info_files(study)
+    return nil if extended_files.nil? or extended_files.empty?
     sample_extended_info_files(study).each do |file|
       sample_extended_info = sample_extended_info.attach file
     end
@@ -103,7 +104,8 @@ module Study
     file = matrix_file(study, matrix)
     sample_info = sample_info_file(study)
     value_type = study_info(study)[:expression_type]
-    Matrix.new file.find, sample_info, value_type, format
+    organism = study_info(study)[:organism]
+    Matrix.new file.find, sample_info, value_type, format, organism
   end
 
   def self.studies

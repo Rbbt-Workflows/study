@@ -204,6 +204,30 @@ CohortTasks = Proc.new do
     end
   end
 
+  dep :mutation_incidence
+  dep :genomic_mutation_consequence
+  task :mi_incidence => :array do |threshold|
+    
+    pasted = TSV.paste_streams [step(:genomic_mutation_consequence), step(:mutation_incidence)], :fix_flat => true
+
+    dumper = TSV::Dumper.new :key_field => "Mutated Isoform", :fields => ["Sample"], :namespace => organism, :type => :flat
+    dumper.init
+    TSV.traverse pasted, :into => dumper, :type => :array, :bar => "Mutated Isoform incidence" do |line|
+      next if line =~ /^#/
+      mut, mis_str, sample_str = line.split("\t")
+
+      res = []
+      res.extend MultipleResult
+      samples = sample_str.split("|") 
+      mis_str.split("|").each do |mi|
+        res << [mi, samples]
+      end
+      res
+    end
+
+    TSV.collapse_stream(dumper.stream)
+  end
+
   dep :organism
   dep :genomic_mutations
   dep :num_genotyped_samples

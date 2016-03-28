@@ -38,7 +38,7 @@
     - num_samples = study.genotyped_samples.length
     - overlapping = matches.source_entity.uniq
     - affected = matches.select_by(:info){|info| info["affected"] == "true" }.source_entity.uniq
-    - damaged = matches.select_by(:info){|info| info["damaged"] == "true" }.source_entity.uniq
+    - damaged = matches.select_by(:info){|info|  info["damaged_mutated_isoform"] == "true" }.source_entity.uniq
     - splicing = matches.select_by(:info){|info| info["splicing"] == "true" }.source_entity.uniq
     - broken = matches.select_by(:info){|info| info["broken"] == "true" }.source_entity.uniq
     

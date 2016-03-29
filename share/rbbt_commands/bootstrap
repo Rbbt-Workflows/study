@@ -24,7 +24,6 @@ EOF
 Workflow.workdir = options[:workdir] if options[:workdir]
 
 Workflow.require_workflow "Study"
-Workflow.require_workflow "MutSig"
 
 if options[:workflows]
   options[:workflows].split(",").each do |workflow|
@@ -240,6 +239,8 @@ Misc.bootstrap studies, 2, :respawn => :always do |study|
 end
 
 #{{{ MUTSIG
+
+Workflow.require_workflow "MutSig"
 
 Log.warn "STUDY BOOTSTRAP - #{i+=1; i}"
 Misc.bootstrap studies, 1, :respawn => :always do |study|

@@ -657,4 +657,23 @@ data
     io2
   end
 
+  dep :mi_incidence
+  dep :firestar
+  task :sample_mi_firestar => :tsv do
+    TSV.paste_streams dependencies, :fix_flat => true
+  end
+
+  dep :mi_incidence
+  dep :interfaces
+  task :sample_mi_interfaces => :tsv do
+    TSV.paste_streams dependencies, :fix_flat => true
+  end
+
+  dep :mi_incidence
+  dep :kinmut
+  task :sample_mi_kinmut => :tsv do
+    TSV.paste_streams dependencies, :fix_flat => true
+  end
+
+
 end

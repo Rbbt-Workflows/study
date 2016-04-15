@@ -22,13 +22,13 @@ Misc.bootstrap(Study.studies, 3) do |study|
   end
 end
 
-TSV.traverse Study.studies, :bar => "Registering study KBs" do |study|
-  begin
-    KnowledgeBaseRESTHelpers.add_syndication study, Study.setup(study).knowledge_base
-  rescue
-    Log.warn $!.message
-  end
-end
+#TSV.traverse Study.studies, :bar => "Registering study KBs" do |study|
+#  begin
+#    KnowledgeBaseRESTHelpers.add_syndication study, Study.setup(study).knowledge_base
+#  rescue
+#    Log.warn $!.message
+#  end
+#end
 
 
 helpers do
@@ -69,6 +69,8 @@ before do
   else
     study = nil
   end
+
+  study ||= params[:cohort] 
 
   authorize! if study
 

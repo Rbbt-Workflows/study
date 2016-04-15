@@ -3,9 +3,8 @@
 - action_card = ActionCard.new
 
 - action_card.description do
-
   :markdown
-    Compare damage scores (MetaLR_score from DbNSFP) of mutations in study with all possible mutations
+    Compare damage scores (MetaLR_score from DbNSFP) of mutations in study with all possible mutations. Based on FM-Bias from Oncodrive-FM 
 
 = action_card_render action_card do
   = table :page => "1~p.value", :table_id => "Gene damage bias in #{study}" do

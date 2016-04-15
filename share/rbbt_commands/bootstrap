@@ -208,20 +208,6 @@ Misc.bootstrap studies, [$cpus, studies.length].min, :respawn => :always do |stu
   nil
 end
 
-#{{{ GENOMIC MUTATION ANNOTATIONS
-
-
-Log.warn "STUDY BOOTSTRAP - #{i+=1; i}"
-Misc.bootstrap studies, 1, :respawn => :always do |study|
-  Study.setup(study)
-
-  job = study.genomic_mutation_annotations(:job)
-  job.produce
-
-  Log.warn "STUDY BOOTSTRAP - " + study
-  nil
-end
-
 #{{{ SAMPLE ENRICHMENT
 
 Log.warn "STUDY BOOTSTRAP - #{i+=1; i}"
@@ -234,6 +220,20 @@ Misc.bootstrap studies, 2, :respawn => :always do |study|
     #study.mutation_enrichment(true, :database => database)
     nil
   end
+  Log.warn "STUDY BOOTSTRAP - " + study
+  nil
+end
+
+#{{{ GENOMIC MUTATION ANNOTATIONS
+
+
+Log.warn "STUDY BOOTSTRAP - #{i+=1; i}"
+Misc.bootstrap studies, 1, :respawn => :always do |study|
+  Study.setup(study)
+
+  job = study.genomic_mutation_annotations(:job)
+  job.produce
+
   Log.warn "STUDY BOOTSTRAP - " + study
   nil
 end

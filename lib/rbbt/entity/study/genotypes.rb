@@ -8,11 +8,11 @@ module Study
   end
 
   def has_genotypes?
-    #@has_genotypes ||= samples.select{|s| s.has_genotype? }.any?
     @has_genotypes ||= genotyped_samples.any?
   end
 
   attr_accessor :watson
+
   def watson
     @watson  = study_info[:watson] if @watson.nil?
     @watson
@@ -39,15 +39,18 @@ module Study
   end
 
   property :get_genes => :single do |type=nil|
-    @sample_gene_matches ||= subset(:sample_genes, :source => :all, :target => :all)
+    sample_gene_matches ||= subset(:sample_genes, :source => :all, :target => :all)
     case type
     when :recurrent, "recurrent", "Recurrent"
-      recurrent = Misc.counts(@sample_gene_matches.select_by(:info){|info| info["affected"] == "true"}.target).select{|g,c| c > 1 }.collect{|g,c| g }
-      @sample_gene_matches.target_entity.uniq.subset(recurrent)
+      #recurrent = Misc.counts(sample_gene_matches.select_by(:info){|info| info["affected"] == "true"}.target).select{|g,c| c > 1 }.collect{|g,c| g }
+      recurrent = Misc.counts(sample_gene_matches.filter("affected" => "true").target).select{|g,c| c > 1 }.collect{|g,c| g }
+      sample_gene_matches.target_entity.uniq.subset(recurrent)
     when nil
-      @sample_gene_matches.target_entity.uniq
+      sample_gene_matches.target_entity.uniq
     else
-      @sample_gene_matches.select_by(:info){|info| info[type.to_s] == "true" }.target_entity.uniq
+      #sample_gene_matches.select_by(:info){|info| info[type.to_s] == "true" }.target_entity.uniq
+      sample_gene_matches.filter(type.to_s => 'true').target_entity.uniq
     end
   end
+
 end

@@ -136,7 +136,7 @@ module Study
 
   property :subset => :single do |database,options={}|
     options = Misc.add_defaults options, :source => :all, :target => :all
-  self.knowledge_base.subset(database, options)
+    self.knowledge_base.subset(database, options)
   end
 
 end

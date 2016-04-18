@@ -603,6 +603,7 @@ data
   dep :annotate_DbSNP
   dep :mi_damaged
   dep Sequence, :genes, :positions => :genomic_mutations, :organism => :organism
+  dep Sequence, :reference, :positions => :genomic_mutations, :organism => :organism
   dep Sequence, :type, :mutations => :genomic_mutations, :organism => :organism
   task :mutation_extended_summary => :tsv do
     Step.wait_for_jobs dependencies
@@ -615,19 +616,21 @@ data
     pos.unshift 1
     pos.unshift 3
 
-    io = TSV.paste_streams [step(:mutation_incidence), step(:type), step(:genes), step(:sequence_ontology),CMD.cmd("cut -f #{pos * ","} '#{step(:annotate_DbSNP).path}'", :pipe => true)] , :fix_flat => true
+    io = TSV.paste_streams [step(:mutation_incidence), step(:reference), step(:type), step(:genes), step(:sequence_ontology),CMD.cmd("cut -f #{pos * ","} '#{step(:annotate_DbSNP).path}'", :pipe => true)] , :fix_flat => true
 
-    io2 = TSV.traverse io, :type => :array, :into => :stream do |line|
+    name_index = Translation.index(organism, "Associated Gene Name", "Ensembl Gene ID")
+
+    io2 = TSV.traverse io, :type => :array, :into => :stream, :bar => true do |line|
       begin
         if line =~ /^#/
           if line =~ /^#:/
             line
           else
-            mut, sample, type, genes, mi, mi_so, mut_so, so, rsid, orig, caf  = line.split("\t")
-            [mut, sample, type, genes, mi, "Damaged", mi_so, mut_so, so, rsid, "Original Mutation", caf, "Mutated Allele Frequency"] * "\t"
+            mut, sample, type, ref, genes, mi, mi_so, mut_so, so, rsid, orig, caf  = line.split("\t")
+            [mut, sample, type, ref, genes, "Associated Gene Name", mi, "Damaged", mi_so, mut_so, so, rsid, "Original Mutation", caf, "Mutated Allele Frequency"] * "\t"
           end
         else
-          mut, sample, type, genes, mi, mi_so, mut_so, so, rsid, orig, caf  = line.split("\t")
+          mut, sample, type, ref, genes, mi, mi_so, mut_so, so, orig, rsid, caf  = line.split("\t")
 
           if caf and not caf.empty?
             alt = mut.split(":")[2]
@@ -646,7 +649,8 @@ data
             damaged = ""
           end
 
-          [mut, sample, type, genes, mi, damaged, mi_so, mut_so, so, orig, rsid, caf, maf] * "\t"
+          gene_names = name_index.values_at(*genes.split("|")) * "|"
+          [mut, sample, type, ref, genes, gene_names, mi, damaged, mi_so, mut_so, so, orig, rsid, caf, maf] * "\t"
         end
       rescue
         Log.exception $!

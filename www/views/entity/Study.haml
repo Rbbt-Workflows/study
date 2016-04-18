@@ -35,6 +35,9 @@
 
 - entity_card.description do
 
+  - study.knowledge_base.get_index(:mutation_info)
+  - study.knowledge_base.get_index(:sample_genes)
+
   .row
     :documentation
 
@@ -52,36 +55,38 @@
       by mutations in at least two samples
 
   - if entity.has_genotypes?
-    - entity.mutation_info
-    - entity.sample_genes
     .row
 
       .mutations.responsive_column
         %h3 Mutations
         = fragment do
-          - mutation_info = study.mutation_info
+          - log :all_mutations
           - all = study.knowledge_base.all(:mutation_info)
-          - metagenotype = study.genomic_mutations
-          - relevant = all.filter("affected" => 'true').source_entity.uniq
-          - broken = all.filter("broken" => 'true').source_entity.uniq
 
           %table.ui.collapsing.table
             %tbody
 
               %tr
                 %td All Mutations
+                - log :metagenotype
+                - metagenotype = study.genomic_mutations
                 %td= metagenotype.list_link :length, "All mutations in #{ entity }"
           
               %tr
                 %td Relevant Mutations
+                - log :relevant
+                - relevant = all.filter("affected" => 'true').source_entity.uniq
                 %td= relevant.list_link :length, "Relevant mutations in #{ entity }"
 
               %tr
                 %td Damaging Mutations, incl. splicing 
+                - log :broken
+                - broken = all.filter("broken" => 'true').source_entity.uniq
                 %td= broken.list_link :length, "Damaging mutations in #{ entity }"
 
               %tr
                 %td Recurrent Mutations
+                - log :recurrent
                 - recurrent = study.recurrent_mutations
                 - recurrent.extend AnnotatedArray
                 %td= recurrent.list_link :length, "Recurrent mutations in #{ entity }"

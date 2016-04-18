@@ -30,7 +30,6 @@ end
 #  end
 #end
 
-
 helpers do
 
   def load_user_studies

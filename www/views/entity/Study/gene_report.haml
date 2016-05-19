@@ -11,8 +11,9 @@
 
 = action_card_render action_card do
 
+  - orig = gene
   - gene = get_gene gene, entity.organism
-  - raise ParameterException, "Gene not recognize" if gene.nil?
+  - raise ParameterException, "Gene not recognized: #{ orig }" if gene.nil?
   - name = gene.name || gene 
 
   - study = entity

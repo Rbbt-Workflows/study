@@ -139,6 +139,16 @@ module Study
     self.knowledge_base.subset(database, options)
   end
 
+  property :mutations_in_range => :single do |chr,start,eend|
+    TSV.traverse self.genomic_mutations, :into => [], :type => :array do |mutation|
+      mut_chr,pos,allele = mutation.split(":")
+      next unless mut_chr == chr
+      pos = pos.to_i
+      next unless pos >= start and pos <= eend
+      mutation 
+    end
+  end
+
 end
 
 require 'rbbt/entity/study/genotypes'

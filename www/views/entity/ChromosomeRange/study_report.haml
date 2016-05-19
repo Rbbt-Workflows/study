@@ -1,0 +1,53 @@
+- studies = user_studies[user];
+
+- action_card = ActionCard.new do
+  - input :study, :select, "Study", nil, :select_options => studies
+  - input :organism, :hidden, "Organism code", entity.organism
+ 
+- action_card.require :study
+
+- action_card.description do
+
+  :markdown
+    Select a study to see mutations and genes on this chromosome range
+
+= action_card_render action_card do
+
+  - require 'bio-svgenes'
+  - svg = nil
+  :ruby
+
+    p = Bio::Graphics::Page.new(:width => 800,
+                                :height => 200,
+                                :number_of_intervals => 10)
+
+
+    gene_track = p.add_track(:glyph => :generic,
+                             :name => 'Genes',
+                             :label => true  )
+
+    entity.genes.each do |gene|
+      range = gene.chr_range
+      gene_track.add Bio::Graphics::MiniFeature.new(:start => range.begin, :end => range.end, :strand => gene.strand,  :params => {:title => gene.name || gene, :class => "title"})
+    end
+
+    
+    mutations = Study.setup(study).mutations_in_range(entity.chromosome, entity.start, entity.end)
+
+    if mutations.any?
+      mutation_track = p.add_track(:glyph => :generic,
+                               :name => 'Mutations',
+                               :label => false  )
+
+      mutations.each do |mutation|
+        pos = mutation.split(":")[1].to_i
+        mutation_track.add Bio::Graphics::MiniFeature.new(:start => pos, :end => pos+1, :strand => 1, :params => {:title => mutation, :class => 'title'})
+      end
+    end
+
+    svg = p.get_markup
+
+  :sass
+    .ui.segment.chromosome_range > svg
+      background-color: white
+  .ui.segment.chromosome_range= svg

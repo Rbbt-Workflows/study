@@ -65,6 +65,9 @@ Study=/$PWD filter="*.rb *.R *.js *.sass *.haml *.tsv" {
     GenomicMutation=GenomicMutation{
      study_report.haml
     }
+    ChromosomeRange=ChromosomeRange{
+     study_report.haml
+    }
    }
    entity_list=entity_list{
     Gene=Gene{

@@ -51,7 +51,11 @@ if task
     Study.setup(study)
 
     job = study.send(task.to_sym, :job)
-    job.produce
+    begin
+      job.produce
+    rescue
+      Log.error "Error processing #{ task } for #{ study }"
+    end
   end
   exit
 end

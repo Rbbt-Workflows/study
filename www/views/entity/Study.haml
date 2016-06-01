@@ -60,8 +60,8 @@
       .mutations.responsive_column
         %h3 Mutations
         = fragment do
-          - log :all_mutations
-          - all = study.knowledge_base.all(:mutation_info)
+          -# log :all_mutations
+          -# all = study.knowledge_base.all(:mutation_info)
 
           %table.ui.collapsing.table
             %tbody
@@ -70,18 +70,21 @@
                 %td All Mutations
                 - log :metagenotype
                 - metagenotype = study.genomic_mutations
+                - metagenotype.extend AnnotatedArray
                 %td= metagenotype.list_link :length, "All mutations in #{ entity }"
           
               %tr
                 %td Relevant Mutations
                 - log :relevant
-                - relevant = all.filter("affected" => 'true').source_entity.uniq
+                -# relevant = all.filter("affected" => 'true').source_entity.uniq
+                - relevant = study.knowledge_base.get_database(:mutation_info).select("affected" => 'true').keys
                 %td= relevant.list_link :length, "Relevant mutations in #{ entity }"
 
               %tr
                 %td Damaging Mutations, incl. splicing 
                 - log :broken
-                - broken = all.filter("broken" => 'true').source_entity.uniq
+                -# broken = all.filter("broken" => 'true').source_entity.uniq
+                - broken = study.knowledge_base.get_database(:mutation_info).select("broken" => 'true').keys
                 %td= broken.list_link :length, "Damaging mutations in #{ entity }"
 
               %tr

@@ -38,14 +38,9 @@ CohortTasks = Proc.new do
     end
   end
 
-  dep Sample, :mutation_info do |jobname,options|
+  dep Sample, :mutation_info, :compute => :bootstrap do |jobname,options|
     study = Study.setup(jobname.dup)
-    jobs = study.genotyped_samples.collect{|sample| Sample.setup(sample, :cohort => study); sample.mutation_info(:job, options) }.flatten
-    Misc.bootstrap(jobs, 3, :bar => "Processing sample mutation_info", :respawn => :always) do |job|
-      job.produce
-      nil
-    end
-    jobs
+    study.genotyped_samples.collect{|sample| Sample.setup(sample, :cohort => study); sample.mutation_info(:job, options) }.flatten
   end
   task :mutation_info => :tsv do
     Step.wait_for_jobs dependencies
@@ -68,14 +63,9 @@ CohortTasks = Proc.new do
     Misc.sort_stream io
   end
 
-  dep Sample, :gene_sample_mutation_status do |jobname,options|
+  dep Sample, :gene_sample_mutation_status, :compute => :bootstrap do |jobname,options|
     study = Study.setup(jobname.dup)
-    jobs = study.genotyped_samples.collect{|sample| Sample.setup(sample, :cohort => study); sample.gene_sample_mutation_status(:job, options) }.flatten
-    Misc.bootstrap(jobs, 3, :bar => "Processing gene_sample_mutation_status", :respawn => :always) do |job|
-      job.produce
-      nil
-    end
-    jobs
+    study.genotyped_samples.collect{|sample| Sample.setup(sample, :cohort => study); sample.gene_sample_mutation_status(:job, options) }.flatten
   end
   task :sample_gene_mutations => :tsv do
     Step.wait_for_jobs dependencies
@@ -102,15 +92,10 @@ CohortTasks = Proc.new do
     TSV.collapse_stream io
   end
 
-  dep Sample, :gene_cnv_status do |jobname,options|
+  dep Sample, :gene_cnv_status, :compute => :bootstrap do |jobname,options|
     study = Study.setup(jobname.dup)
     if study.has_cnv?
-      jobs = study.cnv_samples.collect{|sample| Sample.setup(sample, :cohort => study); sample.gene_cnv_status(:job, options) }.flatten
-      Misc.bootstrap(jobs, 3, :bar => "Processing gene_sample_mutation_status", :respawn => :always) do |job|
-        job.produce
-        nil
-      end
-      jobs
+      study.cnv_samples.collect{|sample| Sample.setup(sample, :cohort => study); sample.gene_cnv_status(:job, options) }.flatten
     else
       []
     end
@@ -229,7 +214,7 @@ CohortTasks = Proc.new do
   end
 
   dep :organism
-  dep :genomic_mutations
+  dep :genomic_mutations, :compute => :produce
   dep :num_genotyped_samples
   dep Sequence, :binomial_significance, :organism => :organism, :mutations => :genomic_mutations, :exome => true, :num_samples => :num_genotyped_samples, :vcf => false
   task :binomial_significance => :tsv do

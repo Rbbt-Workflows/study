@@ -31,7 +31,7 @@ module Study
       end
 
       io = TSV.paste_streams(streams, :sort => false, :key_field => "Genomic Mutation", :fields => ["Sample"], :same_fields => true, :type => :double, :merge => true, :namespace => organism)
-      Misc.sensiblewrite(file('tmp-stream-' + i.to_s), io)
+      Open.write(file('tmp-stream-' + i.to_s), io.read)
     end
 
     log :pasting, "Pasting sorted streams"

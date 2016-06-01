@@ -38,19 +38,38 @@ module Study
     GenomicMutation.setup(cohort.flatten.sort, self + " metagenotype", organism, watson)
   end
 
+  #property :get_genes => :single do |type=nil|
+  #  sample_gene_matches ||= subset(:sample_genes, :source => :all, :target => :all)
+  #  case type
+  #  when :recurrent, "recurrent", "Recurrent"
+  #    #recurrent = Misc.counts(sample_gene_matches.select_by(:info){|info| info["affected"] == "true"}.target).select{|g,c| c > 1 }.collect{|g,c| g }
+  #    recurrent = Misc.counts(sample_gene_matches.filter("affected" => "true").target).select{|g,c| c > 1 }.collect{|g,c| g }
+  #    sample_gene_matches.target_entity.uniq.subset(recurrent)
+  #  when nil
+  #    sample_gene_matches.target_entity.uniq
+  #  else
+  #    #sample_gene_matches.select_by(:info){|info| info[type.to_s] == "true" }.target_entity.uniq
+  #    sample_gene_matches.filter(type.to_s => 'true').target_entity.uniq
+  #  end
+  #end
+
   property :get_genes => :single do |type=nil|
-    sample_gene_matches ||= subset(:sample_genes, :source => :all, :target => :all)
-    case type
+    database = knowledge_base.get_database(:sample_genes)
+    genes = case type
     when :recurrent, "recurrent", "Recurrent"
       #recurrent = Misc.counts(sample_gene_matches.select_by(:info){|info| info["affected"] == "true"}.target).select{|g,c| c > 1 }.collect{|g,c| g }
-      recurrent = Misc.counts(sample_gene_matches.filter("affected" => "true").target).select{|g,c| c > 1 }.collect{|g,c| g }
-      sample_gene_matches.target_entity.uniq.subset(recurrent)
+      Misc.counts(database.select("affected" => "true").column("Ensembl Gene ID").values.compact.flatten).select{|g,c| c > 1 }.collect{|g,c| g }
     when nil
-      sample_gene_matches.target_entity.uniq
+      #sample_gene_matches.target_entity.uniq
+      database.column("Ensembl Gene ID").values.flatten.uniq
     else
       #sample_gene_matches.select_by(:info){|info| info[type.to_s] == "true" }.target_entity.uniq
-      sample_gene_matches.filter(type.to_s => 'true').target_entity.uniq
+      database.select(type.to_s => "true").column("Ensembl Gene ID").values.compact.flatten
     end
+
+    organism = database.namespace
+    Gene.setup(genes, "Ensembl Gene ID", organism)
   end
+
 
 end

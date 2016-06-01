@@ -10,7 +10,6 @@ Study=/$PWD filter="*.rb *.R *.js *.sass *.haml *.tsv" {
    genotypes.rb
    cnv.rb
    expression.rb
-   pancancer.rb
    maf.rb
 
    snv.rb

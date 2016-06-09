@@ -191,7 +191,7 @@ CohortTasks = Proc.new do
 
   dep :mutation_incidence
   dep :genomic_mutation_consequence
-  task :mi_incidence => :array do |threshold|
+  task :mi_incidence => :tsv do |threshold|
     
     pasted = TSV.paste_streams [step(:genomic_mutation_consequence), step(:mutation_incidence)], :fix_flat => true
 
@@ -581,10 +581,10 @@ data
     end
   end
 
+  dep :mutation_incidence, :compute => :produce
+  dep :genomic_mutations, :compute => :produce
+  dep :sequence_ontology, :principal => true, :compute => :produce
   dep :organism
-  dep :genomic_mutations
-  dep :mutation_incidence
-  dep :sequence_ontology, :principal => true
   dep :annotate_DbSNP
   dep :mi_damaged
   dep Sequence, :genes, :positions => :genomic_mutations, :organism => :organism
@@ -594,6 +594,7 @@ data
     Step.wait_for_jobs dependencies
 
     damaged = step(:mi_damaged).load
+    organism = step(:organism).load
 
     all_fields = TSV.parse_header(step(:annotate_DbSNP)).all_fields
     fields = ["CAF", "RS ID"]
@@ -609,13 +610,17 @@ data
       begin
         if line =~ /^#/
           if line =~ /^#:/
-            line
+            if line.include? ":namespace"
+              line
+            else
+              line.sub("#:", "#: :namespace=#{organism}")
+            end
           else
             mut, sample, type, ref, genes, mi, mi_so, mut_so, so, rsid, orig, caf  = line.split("\t")
             [mut, sample, type, ref, genes, "Associated Gene Name", mi, "Damaged", mi_so, mut_so, so, rsid, "Original Mutation", caf, "Mutated Allele Frequency"] * "\t"
           end
         else
-          mut, sample, type, ref, genes, mi, mi_so, mut_so, so, orig, rsid, caf  = line.split("\t")
+          mut, sample, type, ref, genes, mi, mi_so, mut_so, so, rsid, orig, caf  = line.split("\t")
 
           if caf and not caf.empty?
             alt = mut.split(":")[2]
@@ -635,7 +640,7 @@ data
           end
 
           gene_names = name_index.values_at(*genes.split("|")) * "|"
-          [mut, sample, type, ref, genes, gene_names, mi, damaged, mi_so, mut_so, so, orig, rsid, caf, maf] * "\t"
+          [mut, sample, type, ref, genes, gene_names, mi, damaged, mi_so, mut_so, so, rsid, orig, caf, maf] * "\t"
         end
       rescue
         Log.exception $!
@@ -646,23 +651,22 @@ data
     io2
   end
 
-  dep :mi_incidence
-  dep :firestar
+  dep :mi_incidence, :compute => :produce
+  dep :firestar, :compute => :produce
   task :sample_mi_firestar => :tsv do
+    Step.wait_for_jobs dependencies
     TSV.paste_streams dependencies, :fix_flat => true, :all_match => true
   end
 
-  dep :mi_incidence
-  dep :interfaces
+  dep :mi_incidence, :compute => :produce
+  dep :interfaces, :compute => :produce
   task :sample_mi_interfaces => :tsv do
     TSV.paste_streams dependencies, :fix_flat => true, :all_match => true
   end
 
-  dep :mi_incidence
-  dep :kinmut
+  dep :mi_incidence, :compute => :produce
+  dep :kinmut, :compute => :produce
   task :sample_mi_kinmut => :tsv do
     TSV.paste_streams dependencies, :fix_flat => true, :all_match => true
   end
-
-
 end

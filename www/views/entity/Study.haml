@@ -106,15 +106,15 @@
           
               %tr
                 %td Affected genes
-                %td= entity.get_genes(:affected).list_link :length, "Affected genes in #{ entity }"
+                %td= entity.get_genes(:affected).uniq.list_link :length, "Affected genes in #{ entity }"
 
               %tr
                 %td Damaged genes
-                %td= entity.get_genes(:damaged_mutated_isoform).list_link :length, "Damaged genes in #{ entity }"
+                %td= entity.get_genes(:damaged_mutated_isoform).uniq.list_link :length, "Damaged genes in #{ entity }"
 
               %tr
                 %td Broken genes 
-                %td= entity.get_genes(:broken).list_link :length, "Broken genes in #{ entity }"
+                %td= entity.get_genes(:broken).uniq.list_link :length, "Broken genes in #{ entity }"
 
               -#%tr
                 %td Missing genes

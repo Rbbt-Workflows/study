@@ -11,63 +11,57 @@ module Study
     end
   end
 
+  #dep :compute => :bootstrap do |jobname, task|
+  #  study = Study.setup(jobname.dup)
+  #  study.genotyped_samples.collect{|sample| sample.mutation_genes(:job) }
+  #end
+  #task :mutation_info => :tsv do
+  #  tsv = nil
+  #  
+  #  genotyped_samples = study.genotyped_samples
+  #  raise "No genotyped samples" if genotyped_samples.empty?
 
-  dep do |jobname, task|
-    study = Study.setup(jobname.dup)
-    Misc.bootstrap(study.genotyped_samples, 20, :bar => "Boostrapping genotyped samples") do |sample|
-      job = Sample.setup(sample, :cohort => jobname).mutation_genes(:job)
-      job.run(true) unless job.done? and not job.dirty? and not job.started?
-      job.join unless job.done? 
-    end
-    study.genotyped_samples.collect{|sample| sample.mutation_genes(:job)}
-  end
-  task :mutation_info => :tsv do
-    tsv = nil
-    
-    genotyped_samples = study.genotyped_samples
-    raise "No genotyped samples" if genotyped_samples.empty?
+  #  tsv = genotyped_samples.first.mutation_genes.annotate({})
+  #  tsv.type = :double
+  #  tsv.unnamed = true
+  #  good_fields = tsv.fields - ["missing"]
 
-    tsv = genotyped_samples.first.mutation_genes.annotate({})
-    tsv.type = :double
-    tsv.unnamed = true
-    good_fields = tsv.fields - ["missing"]
+  #  sample_mutations = {}
+  #  io = TSV.traverse genotyped_samples, :type => :array, :bar => "Mutation info", :into => :stream do |sample|
+  #    sample_mutation_info_job = sample.mutation_genes(:job)
+  #    sample_mutation_info_job.run(true).join
+  #    sample_mutation_info = sample_mutation_info_job.path.tsv :fields => good_fields, :unnamed => true, :type => :double
+  #    mutations = sample.genomic_mutations
+  #    sample_mutations[sample] = Set.new Annotated.purge(mutations)
 
-    sample_mutations = {}
-    io = TSV.traverse genotyped_samples, :type => :array, :bar => "Mutation info", :into => :stream do |sample|
-      sample_mutation_info_job = sample.mutation_genes(:job)
-      sample_mutation_info_job.run(true).join
-      sample_mutation_info = sample_mutation_info_job.path.tsv :fields => good_fields, :unnamed => true, :type => :double
-      mutations = sample.genomic_mutations
-      sample_mutations[sample] = Set.new Annotated.purge(mutations)
+  #    res = []
+  #    sample_mutation_info.each do |mutation,lvalues|
+  #      res << Misc.zip_fields(lvalues).collect{|values| ([mutation] + values) * "\t"}
+  #    end
 
-      res = []
-      sample_mutation_info.each do |mutation,lvalues|
-        res << Misc.zip_fields(lvalues).collect{|values| ([mutation] + values) * "\t"}
-      end
+  #    next if res.empty?
+  #    res * "\n"
+  #  end
 
-      next if res.empty?
-      res * "\n"
-    end
+  #  sorted = CMD.cmd('env LC_ALL=C sort -u', :in => io, :pipe => true)
 
-    sorted = CMD.cmd('env LC_ALL=C sort -u', :in => io, :pipe => true)
+  #  raise "No mutations" if tsv.nil?
 
-    raise "No mutations" if tsv.nil?
+  #  TSV.traverse sorted, :type => :array, :bar => "Adding to TSV", :into => tsv do |line|
+  #    next if line.empty?
+  #    mut, *values = line.split("\t")
+  #    _v = values.collect{|v| v.split("|")}
+  #    [mut, _v]
+  #  end
 
-    TSV.traverse sorted, :type => :array, :bar => "Adding to TSV", :into => tsv do |line|
-      next if line.empty?
-      mut, *values = line.split("\t")
-      _v = values.collect{|v| v.split("|")}
-      [mut, _v]
-    end
+  #  tsv.with_monitor do
+  #    tsv.add_field "Sample" do |mutation, info|
+  #      sample_mutations.select{|sample,mutations| mutations.include? mutation }.collect{|sample, mutations| sample }
+  #    end 
+  #  end
 
-    tsv.with_monitor do
-      tsv.add_field "Sample" do |mutation, info|
-        sample_mutations.select{|sample,mutations| mutations.include? mutation }.collect{|sample, mutations| sample }
-      end 
-    end
-
-    tsv
-  end
+  #  tsv
+  #end
 
   dep :mutation_info
   task :mutation_samples => :tsv do

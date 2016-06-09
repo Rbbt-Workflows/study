@@ -54,17 +54,18 @@ module Study
   #end
 
   property :get_genes => :single do |type=nil|
-    database = knowledge_base.get_database(:sample_genes)
+    database = knowledge_base.get_index(:sample_genes)
     genes = case type
     when :recurrent, "recurrent", "Recurrent"
       #recurrent = Misc.counts(sample_gene_matches.select_by(:info){|info| info["affected"] == "true"}.target).select{|g,c| c > 1 }.collect{|g,c| g }
-      Misc.counts(database.select("affected" => "true").column("Ensembl Gene ID").values.compact.flatten).select{|g,c| c > 1 }.collect{|g,c| g }
+      Misc.counts(database.select("affected" => "true").keys.collect{|p| p.partition("~").last}).select{|g,c| c > 1 }.collect{|g,c| g }
     when nil
       #sample_gene_matches.target_entity.uniq
-      database.column("Ensembl Gene ID").values.flatten.uniq
+      database.keys.collect{|p| p.partition("~").last}
     else
       #sample_gene_matches.select_by(:info){|info| info[type.to_s] == "true" }.target_entity.uniq
-      database.select(type.to_s => "true").column("Ensembl Gene ID").values.compact.flatten
+      subset = database.select(type.to_s => "true")
+      subset.keys.collect{|p| p.partition("~").last}
     end
 
     organism = database.namespace

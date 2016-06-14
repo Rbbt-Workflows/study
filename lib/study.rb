@@ -1,8 +1,6 @@
 require 'rbbt/matrix'
 require 'rbbt/matrix/differential'
 
-Workflow.require_workflow "Sample"
-
 module Study
 
   class << self

@@ -1,7 +1,11 @@
 require 'rbbt-util'
 require 'rbbt/workflow'
 
+
+Workflow.require_workflow "Sample"
+
 require 'study'
+
 module Study
   extend Workflow
 

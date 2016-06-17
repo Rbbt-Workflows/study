@@ -19,8 +19,6 @@
 
     
     - index = study.knowledge_base.get_index(:sample_mutations)
-    - Log.tsv index
-    - iii index["51106212~12:54423561:A"]
     - matches = study.knowledge_base.subset(:sample_mutations, :target => [mutation], :source => :all)
 
     - tsv = matches.tsv

@@ -12,7 +12,6 @@
   - pvalues = {}
   - Study.setup studies
 
-  -# Misc.bootstrap studies, 10, :respawn => :always, :bar => @step.progress_bar('Processing studies') do |study|
   - TSV.traverse studies, :type => :array, :respawn => :always, :bar => @step.progress_bar('Processing studies') do |study|
     - Study.setup(study)
     - next unless study.has_genotypes?
@@ -26,6 +25,7 @@
 
   - fields = %w(Overlapping Affected Damaged Miss-spliced Broken Significant)
   - tsv = TSV.setup({}, :key_field => "Study", :fields => fields, :type => :double)
+
   - all_matches.each do |study,matches|
     - log :matches, study
     - next if matches.nil? or matches.empty?
@@ -33,7 +33,7 @@
     - num_samples = study.genotyped_samples.length
     - overlapping = matches.select_by(:info){|info| info["overlapping"] == "true" }.source_entity.uniq
     - affected = matches.select_by(:info){|info| info["affected"] == "true" }.source_entity.uniq
-    - damaged = matches.select_by(:info){|info| info["damaged"] == "true" }.source_entity.uniq
+    - damaged = matches.select_by(:info){|info| info["damaged_mutated_isoform"] == "true" }.source_entity.uniq
     - splicing = matches.select_by(:info){|info| info["splicing"] == "true" }.source_entity.uniq
     - broken = matches.select_by(:info){|info| info["broken"] == "true" }.source_entity.uniq
     

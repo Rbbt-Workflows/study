@@ -102,7 +102,6 @@ CohortTasks = Proc.new do
   end
   task :sample_gene_cnvs => :tsv do
     if dependencies.any?
-      Step.wait_for_jobs dependencies
       parser = TSV::Parser.new dependencies.first
       fields = parser.fields
       fields.unshift "Sample"
@@ -129,8 +128,8 @@ CohortTasks = Proc.new do
     end
   end
 
-  dep :sample_gene_mutations
-  dep :sample_gene_cnvs
+  dep :sample_gene_mutations, :compute => :produce
+  dep :sample_gene_cnvs, :compute => :produce
   task :sample_genes => :tsv do
     if study.has_cnv?
       io = TSV.paste_streams [step(:sample_gene_mutations), step(:sample_gene_cnvs)]

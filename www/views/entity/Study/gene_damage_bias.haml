@@ -6,8 +6,26 @@
   :markdown
     Compare damage scores (MetaLR_score from DbNSFP) of mutations in study with all possible mutations. Based on FM-Bias from Oncodrive-FM 
 
+    Citation for Oncodrive-FM:
+
+        Gonzalez-Perez A and Lopez-Bigas N. 2012. 
+        Functional impact bias reveals cancer drivers. 
+        Nucleic Acids Res., 10.1093/nar/gks743.
+
+    Citation for DbNSFP:
+
+        Liu X, Wu C, Li C and Boerwinkle E. 2016. 
+        dbNSFP v3.0: A One-Stop Database of Functional Predictions and Annotations for Human Non-synonymous and Splice Site SNVs. 
+        Human Mutation. 37:235-241.
+
+    Citation for DbNSFP MetaLR_score:
+
+        Dong C, Wei P, Jian X, Gibbs R, Boerwinkle E, Wang K* and Liu X*. (2015) 
+        Comparison and integration of deleteriousness prediction methods for nonsynonymous SNVs in whole exome sequencing studies. 
+        Human Molecular Genetics 24(8):2125-2137. *corresponding authors
+
 = action_card_render action_card do
   = table :page => "1~p.value", :table_id => "Gene damage bias in #{study}" do
     - ts  = study.gene_damage_bias
-    -ts.namespace = study.organism
+    - ts.namespace = study.organism
     - ts

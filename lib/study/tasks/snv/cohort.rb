@@ -40,7 +40,7 @@ CohortTasks = Proc.new do
 
   dep Sample, :mutation_info, :compute => :bootstrap do |jobname,options|
     study = Study.setup(jobname.dup)
-    study.genotyped_samples.collect{|sample| Sample.setup(sample, :cohort => study); sample.mutation_info(:job, options) }.flatten
+    study.genotyped_samples.collect{|sample| Sample.setup(sample, :cohort => study) unless Sample === sample; sample.mutation_info(:job, options) }.flatten
   end
   task :mutation_info => :tsv do
     Step.wait_for_jobs dependencies
@@ -65,7 +65,7 @@ CohortTasks = Proc.new do
 
   dep Sample, :gene_sample_mutation_status, :compute => :bootstrap do |jobname,options|
     study = Study.setup(jobname.dup)
-    study.genotyped_samples.collect{|sample| Sample.setup(sample, :cohort => study); sample.gene_sample_mutation_status(:job, options) }.flatten
+    study.genotyped_samples.collect{|sample| Sample.setup(sample, :cohort => study) unless Sample === sample; sample.gene_sample_mutation_status(:job, options) }.flatten
   end
   task :sample_gene_mutations => :tsv do
     Step.wait_for_jobs dependencies
@@ -95,7 +95,7 @@ CohortTasks = Proc.new do
   dep Sample, :gene_cnv_status, :compute => :bootstrap do |jobname,options|
     study = Study.setup(jobname.dup)
     if study.has_cnv?
-      study.cnv_samples.collect{|sample| Sample.setup(sample, :cohort => study); sample.gene_cnv_status(:job, options) }.flatten
+      study.cnv_samples.collect{|sample| Sample.setup(sample, :cohort => study) unless Sample === sample; sample.gene_cnv_status(:job, options) }.flatten
     else
       []
     end
@@ -165,6 +165,7 @@ CohortTasks = Proc.new do
 
   dep :sample_genes
   input :recurrent_threshold, :float, "Proportion of samples with gene affected (e.g. 0.05 for 5%)", 0.05
+  returns "Ensembl Gene ID"
   task :recurrent_genes => :array do |recurrent_threshold|
     threshold_count = (recurrent_threshold.to_f * study.genotyped_samples.length).ceil
     threshold_count = 2 if threshold_count < 2

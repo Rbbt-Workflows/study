@@ -213,6 +213,30 @@ CohortTasks = Proc.new do
     TSV.collapse_stream(dumper.stream)
   end
 
+  dep Sample, :mi, :compute => :bootstrap do |jobname, options|
+    study = Study.setup(jobname.dup)
+    study.genotyped_samples.collect{|sample| Sample.setup(sample, :cohort => study) unless Sample === sample; sample.mi(:job, options) }.flatten
+  end
+  task :mi_incidence => :tsv do |threshold|
+    
+    ios = dependencies.collect do |dep|
+      io = TSV.get_stream dep
+      sample = dep.clean_name.split(":").last
+      CMD.cmd("sed 's/$/\t#{sample}/'", :in => io, :pipe => true)
+    end
+
+    pasted = TSV.paste_streams ios, :same_fields => true
+
+    dumper = TSV::Dumper.new :key_field => "Mutated Isoform", :fields => ["Sample"], :namespace => organism, :type => :double
+    dumper.init
+    TSV.traverse pasted, :into => dumper, :type => :array, :bar => "Mutated Isoform incidence" do |line|
+      next if line =~ /^#/
+      mi_str, sample_str = line.split("\t")
+      [mi_str, sample_str.split("\t")]
+    end
+
+  end
+
   dep :organism
   dep :genomic_mutations, :compute => :produce
   dep :num_genotyped_samples

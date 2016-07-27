@@ -15,9 +15,9 @@ module Study
     true
   end
 
-  dep do |jobname, task|
+  dep Sample, :genomic_mutations, :compute => :bootstrap do |jobname, options|
     study = Study.setup(jobname.dup)
-    study.genotyped_samples.collect{|sample| Sample.setup(sample, :cohort => study).genomic_mutations(:job)}
+    study.genotyped_samples.collect{|sample| Sample.setup(sample, :cohort => study) unless Sample === sample; sample.genomic_mutations(:job, options) }
   end
   task :mutation_incidence => :tsv do
     
@@ -47,6 +47,7 @@ module Study
   returns "Genomic Mutation"
   task :genomic_mutations => :array do 
     TSV.traverse step(:mutation_incidence), :type => :flat, :into => :stream do |mutation, samples|
+      mutation = mutation.first
       res = [mutation] * samples.length
       res.extend MultipleResult
       res

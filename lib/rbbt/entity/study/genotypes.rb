@@ -8,7 +8,7 @@ module Study
   end
 
   def has_genotypes?
-    @has_genotypes ||= genotyped_samples.any?
+    @has_genotypes ||= num_genotyped_samples > 0
   end
 
   attr_accessor :watson

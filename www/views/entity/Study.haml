@@ -35,9 +35,6 @@
 
 - entity_card.description do
 
-  - study.knowledge_base.get_index(:mutation_info)
-  - study.knowledge_base.get_index(:sample_genes)
-
   .row
     :documentation
 
@@ -55,6 +52,9 @@
       by mutations in at least two samples
 
   - if entity.has_genotypes?
+    - study.knowledge_base.get_index(:mutation_info)
+    - study.knowledge_base.get_index(:sample_genes)
+
     .row
 
       .mutations.responsive_column
@@ -91,6 +91,7 @@
                 %td Recurrent Mutations
                 - log :recurrent
                 - recurrent = study.recurrent_mutations
+                - recurrent.organism = study.organism
                 - recurrent.extend AnnotatedArray
                 %td= recurrent.list_link :length, "Recurrent mutations in #{ entity }"
 

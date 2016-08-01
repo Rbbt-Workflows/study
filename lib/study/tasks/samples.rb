@@ -4,6 +4,10 @@ module Study
     Study.organism(study)
   end
 
+  task :condition => :sting do
+    study.metadata[:condition]
+  end
+
   task :num_genotyped_samples => :integer do
     study.genotyped_samples.length
   end

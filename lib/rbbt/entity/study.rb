@@ -32,19 +32,17 @@ module Study
     Study.matrix(self, matrix, *rest)
   end
 
-  def match_samples(list)
-    target_field, count = TSV.guess_id sample_info, list
-    target_field = "Sample" if target_field.nil?
-    sample_info.index(:target => target_field).values_at *list
-  end
-
   def match_samples(list, target_list, through_field = nil)
     return list if (list & target_list).any?
     source_field, count = TSV.guess_id sample_info, list
     target_field, count = TSV.guess_id sample_info, target_list
     if through_field
-      tmp = sample_info.index(:target => through_field).values_at *list
-      sample_info.index(:target => target_field).values_at *tmp
+      index_1 = sample_info.index(:target => through_field)
+      index_2 = sample_info.index(:target => target_field)
+
+      tmp = index_1.chunked_values_at(list).compact
+      res = index_2.chunked_values_at(tmp).compact
+      res
     else
       sample_info.index(:target => target_field).values_at *list
     end

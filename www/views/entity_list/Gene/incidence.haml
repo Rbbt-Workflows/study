@@ -12,7 +12,7 @@
   - pvalues = {}
   - Study.setup studies
 
-  - TSV.traverse studies, :type => :array, :respawn => :always, :bar => @step.progress_bar('Processing studies') do |study|
+  - TSV.traverse studies.to_a, :type => :array, :respawn => :always, :bar => @step.progress_bar('Processing studies') do |study|
     - Study.setup(study)
     - next unless study.has_genotypes?
     - log :knowledge_base, study + " Knowledge Base"

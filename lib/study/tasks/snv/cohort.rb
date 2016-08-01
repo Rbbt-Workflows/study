@@ -675,6 +675,13 @@ data
     io2
   end
 
+  dep :mi_incidence
+  task :mi => :array do
+    TSV.traverse step(:mi_incidence), :type => :flat, :into => :stream do |mi, samples|
+      (mi * samples.length) * "\n"
+    end
+  end
+
   dep :mi_incidence, :compute => :produce
   dep :firestar, :compute => :produce
   task :sample_mi_firestar => :tsv do
@@ -693,4 +700,15 @@ data
   task :sample_mi_kinmut => :tsv do
     TSV.paste_streams dependencies, :fix_flat => true, :all_match => true
   end
+
+  dep Sample, :num_genomic_mutations, :compute => :bootstrap do |jobname,options|
+    study = Study.setup(jobname.dup)
+    study.genotyped_samples.collect do |sample|
+      sample.num_genomic_mutations(:job)
+    end
+  end
+  task :num_genomic_mutations => :integer do
+    dependencies.inject(0){|acc,dep| acc += dep.load}
+  end
+
 end

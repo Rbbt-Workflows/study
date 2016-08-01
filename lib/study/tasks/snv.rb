@@ -20,6 +20,7 @@ module Study
     study.genotyped_samples.collect{|sample| Sample.setup(sample, :cohort => study) unless Sample === sample; sample.genomic_mutations(:job, options) }
   end
   task :mutation_incidence => :tsv do
+    Step.wait_for_jobs dependencies
     
     size = Math.sqrt(dependencies.length).to_i + 1
     chunks = Misc.ordered_divide(dependencies, size)

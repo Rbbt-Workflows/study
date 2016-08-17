@@ -35,117 +35,125 @@
 
 - entity_card.description do
 
-  .row
-    :documentation
+  - sample_genes = study.sample_genes(:job)
+  - if not sample_genes.done?
 
-      Affected genes have *non-synonymous* mutations or mutations on *splicing
-      sites*. These mutations are considered *relevant*, as opossed to other
-      intergenic, intronic and synonymous mutations which are disregarded for
-      lack of interpretation tools (for now). Damaged genes have alterations
-      believed to compromise the isoforms function. Broken are genes believed
-      to have at least one of the alleles damaged or affected by splicing.
-      The *missing* category contains genes that *could* have both alleles
-      broken (two mutations, or an heterozygous mutation), and is intended
-      for genetic analysis where considerations of zygosity are important.
-      Surely missing have homozygous damaging mutations that indicate the
-      lack of functional alleles for that gene. Recurrent genes are affected
-      by mutations in at least two samples
-
-  - if entity.has_genotypes?
-    - study.knowledge_base.get_index(:mutation_info)
-    - study.knowledge_base.get_index(:sample_genes)
+    :deferjs
+      reload = true
+      
+  - else
 
     .row
+      :documentation
 
-      .mutations.responsive_column
-        %h3 Mutations
-        = fragment do
-          -# log :all_mutations
-          -# all = study.knowledge_base.all(:mutation_info)
+        Affected genes have *non-synonymous* mutations or mutations on *splicing
+        sites*. These mutations are considered *relevant*, as opossed to other
+        intergenic, intronic and synonymous mutations which are disregarded for
+        lack of interpretation tools (for now). Damaged genes have alterations
+        believed to compromise the isoforms function. Broken are genes believed
+        to have at least one of the alleles damaged or affected by splicing.
+        The *missing* category contains genes that *could* have both alleles
+        broken (two mutations, or an heterozygous mutation), and is intended
+        for genetic analysis where considerations of zygosity are important.
+        Surely missing have homozygous damaging mutations that indicate the
+        lack of functional alleles for that gene. Recurrent genes are affected
+        by mutations in at least two samples
 
-          %table.ui.collapsing.table
-            %tbody
+    - if entity.has_genotypes?
+      - study.knowledge_base.get_index(:mutation_info)
+      - study.knowledge_base.get_index(:sample_genes)
 
-              %tr
-                %td All Mutations
-                - log :metagenotype
-                - metagenotype = study.genomic_mutations
-                - metagenotype.extend AnnotatedArray
-                %td= metagenotype.list_link :length, "All mutations in #{ entity }"
-          
-              %tr
-                %td Relevant Mutations
-                - log :relevant
-                -# relevant = all.filter("affected" => 'true').source_entity.uniq
-                - relevant = study.knowledge_base.get_database(:mutation_info).select("affected" => 'true').keys
-                %td= relevant.list_link :length, "Relevant mutations in #{ entity }"
+      .row
 
-              %tr
-                %td Damaging Mutations, incl. splicing 
-                - log :broken
-                -# broken = all.filter("broken" => 'true').source_entity.uniq
-                - broken = study.knowledge_base.get_database(:mutation_info).select("broken" => 'true').keys
-                %td= broken.list_link :length, "Damaging mutations in #{ entity }"
+        .mutations.responsive_column
+          %h3 Mutations
+          = fragment do
+            -# log :all_mutations
+            -# all = study.knowledge_base.all(:mutation_info)
 
-              %tr
-                %td Recurrent Mutations
-                - log :recurrent
-                - recurrent = study.recurrent_mutations
-                - recurrent.organism = study.organism
-                - recurrent.extend AnnotatedArray
-                %td= recurrent.list_link :length, "Recurrent mutations in #{ entity }"
+            %table.ui.collapsing.table
+              %tbody
 
-      .genes.responsive_column
-        %h3 Genes
-        = fragment do
-          %table.ui.collapsing.table
-            %tbody
+                %tr
+                  %td All Mutations
+                  - log :metagenotype
+                  - metagenotype = study.genomic_mutations
+                  - metagenotype.extend AnnotatedArray
+                  %td= metagenotype.list_link :length, "All mutations in #{ entity }"
+            
+                %tr
+                  %td Relevant Mutations
+                  - log :relevant
+                  -# relevant = all.filter("affected" => 'true').source_entity.uniq
+                  - relevant = study.knowledge_base.get_database(:mutation_info).select("affected" => 'true').keys
+                  %td= relevant.list_link :length, "Relevant mutations in #{ entity }"
 
-              %tr
-                %td All Overlapping Genes
-                %td= entity.get_genes.list_link :length, "All overlapping genes in #{ entity }"
-          
-              %tr
-                %td Affected genes
-                %td= entity.get_genes(:affected).uniq.list_link :length, "Affected genes in #{ entity }"
+                %tr
+                  %td Damaging Mutations, incl. splicing 
+                  - log :broken
+                  -# broken = all.filter("broken" => 'true').source_entity.uniq
+                  - broken = study.knowledge_base.get_database(:mutation_info).select("broken" => 'true').keys
+                  %td= broken.list_link :length, "Damaging mutations in #{ entity }"
 
-              %tr
-                %td Damaged genes
-                %td= entity.get_genes(:damaged_mutated_isoform).uniq.list_link :length, "Damaged genes in #{ entity }"
+                %tr
+                  %td Recurrent Mutations
+                  - log :recurrent
+                  - recurrent = study.recurrent_mutations
+                  - recurrent.organism = study.organism
+                  - recurrent.extend AnnotatedArray
+                  %td= recurrent.list_link :length, "Recurrent mutations in #{ entity }"
 
-              %tr
-                %td Broken genes 
-                %td= entity.get_genes(:broken).uniq.list_link :length, "Broken genes in #{ entity }"
+        .genes.responsive_column
+          %h3 Genes
+          = fragment do
+            %table.ui.collapsing.table
+              %tbody
 
-              -#%tr
-                %td Missing genes
-                %td= entity.get_genes(:missing?).list_link :length, "Missing genes in #{ entity }"
+                %tr
+                  %td All Overlapping Genes
+                  %td= entity.get_genes.list_link :length, "All overlapping genes in #{ entity }"
+            
+                %tr
+                  %td Affected genes
+                  %td= entity.get_genes(:affected).uniq.list_link :length, "Affected genes in #{ entity }"
 
-              -#%tr
-                %td Surely missing genes
-                %td= entity.get_genes(:missing).list_link :length, "Surely missing genes in #{ entity }"
+                %tr
+                  %td Damaged genes
+                  %td= entity.get_genes(:damaged_mutated_isoform).uniq.list_link :length, "Damaged genes in #{ entity }"
 
-              %tr
-                %td Recurrent genes
-                %td= entity.get_genes(:recurrent).list_link :length, "Recurrent genes in #{ entity }"
+                %tr
+                  %td Broken genes 
+                  %td= entity.get_genes(:broken).uniq.list_link :length, "Broken genes in #{ entity }"
 
-    .row
-      .gene_samples
-        %h3 Gene status by sample
-        = fragment do
-          = table :row_ids => :consume do
-            - matches = study.knowledge_base.subset(:sample_genes, :all)
-            - matches.tsv
+                -#%tr
+                  %td Missing genes
+                  %td= entity.get_genes(:missing?).list_link :length, "Missing genes in #{ entity }"
 
-    -#%hr.ui.divider
-    -#.row
-      .mutation_details
-        = fragment do
-          - mutation_info = study.mutation_info
-          - metagenotype = study.genomic_mutations
-          - all = study.knowledge_base.all(:mutation_info)
-          - relevant = all.filter("affected" => 'true').source_entity
-          = fragment relevant.list_action_link :mutation_details, nil, "Relevant mutations in #{entity}"
+                -#%tr
+                  %td Surely missing genes
+                  %td= entity.get_genes(:missing).list_link :length, "Surely missing genes in #{ entity }"
+
+                %tr
+                  %td Recurrent genes
+                  %td= entity.get_genes(:recurrent).list_link :length, "Recurrent genes in #{ entity }"
+
+      .row
+        .gene_samples
+          %h3 Gene status by sample
+          = fragment do
+            = table :row_ids => :consume do
+              - matches = study.knowledge_base.subset(:sample_genes, :all)
+              - matches.tsv
+
+      -#%hr.ui.divider
+      -#.row
+        .mutation_details
+          = fragment do
+            - mutation_info = study.mutation_info
+            - metagenotype = study.genomic_mutations
+            - all = study.knowledge_base.all(:mutation_info)
+            - relevant = all.filter("affected" => 'true').source_entity
+            = fragment relevant.list_action_link :mutation_details, nil, "Relevant mutations in #{entity}"
 
 
 - entity_card.action_controller = default_action_controller entity

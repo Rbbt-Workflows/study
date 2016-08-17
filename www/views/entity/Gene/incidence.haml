@@ -13,13 +13,13 @@
   - pvalues = {}
   - Study.setup studies
   - log "Bootstrapping studies"
-  - Misc.bootstrap(studies) do |study|
+  - Misc.bootstrap(studies.to_a, nil, :bar => @step.progress_bar("Bootstrapping studies")) do |study|
     - Study.setup(study)
     - next unless study.has_genotypes?
     - study.knowledge_base
-    - study.job(:binomial_significance).run(true)
+    - study.binomial_significance(:job).produce
 
-  - TSV.traverse studies, :bar => @step.progress_bar('Processing studies') do |study|
+  - TSV.traverse studies.to_a, :bar => @step.progress_bar('Processing studies') do |study|
     - Study.setup(study)
     - next unless study.has_genotypes?
     - log study

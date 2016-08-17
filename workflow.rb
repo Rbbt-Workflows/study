@@ -51,7 +51,9 @@ module Study
         job = job(name,options)
         case run
         when nil, TrueClass
-          job.run 
+          job.fork.join
+          raise job.get_exception if job.error?
+          job.load
         when :path
           job.run(true).join.path
         when :job

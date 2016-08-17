@@ -4,7 +4,7 @@ module Study
     Study.organism(study)
   end
 
-  task :condition => :sting do
+  task :condition => :string do
     study.metadata[:condition]
   end
 

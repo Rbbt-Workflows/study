@@ -73,12 +73,12 @@ module Study
 
 
   MISSING = "MISSING"
-  dep :sequence_ontology
-  dep :genomic_mutation_consequence
-  dep :mutation_incidence
-  dep :genomic_mutations
+  dep :mutation_incidence, :compute => :produce
+  dep :genomic_mutations, :compute => :produce
+  dep :genomic_mutation_consequence, :compute => :produce
+  dep :sequence_ontology, :compute => :produce
   dep :organism
-  dep Sequence, :reference, :positions => :genomic_mutations, :organism => :organism
+  dep Sequence, :reference, :positions => :genomic_mutations, :organism => :organism, :compute => :produce
   task :maf_file => :text do
 
     ensg2name = Organism.identifiers(organism).index :target => "Associated Gene Name", :fields => ["Ensembl Gene ID"], :persist => true, :unnamed => true

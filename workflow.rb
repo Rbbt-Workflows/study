@@ -49,14 +49,17 @@ module Study
         run, options = true, run if Hash === run
 
         job = job(name,options)
+
         case run
         when nil, TrueClass
-          job.fork.join
+          job.produce(false,true)
           raise job.get_exception if job.error?
           job.load
         when :path
-          job.run(true).join.path
-        when :job
+          job.produce(false,true)
+          raise job.get_exception if job.error?
+          job.path
+        else
           job
         end
       end

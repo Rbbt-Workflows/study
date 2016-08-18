@@ -219,10 +219,16 @@ CohortTasks = Proc.new do
   end
   task :mi_incidence => :tsv do |threshold|
     
+    FileUtils.mkdir files_dir unless File.exists? files_dir
     ios = dependencies.collect do |dep|
       io = TSV.get_stream dep
       sample = dep.clean_name.split(":").last
-      CMD.cmd("sed 's/$/\t#{sample}/'", :in => io, :pipe => true)
+      tmp_file = file(sample)
+      tmp_file_orig = tmp_file_orig
+      Misc.consume_stream(io, false, tmp_file_orig)
+      CMD.cmd("sed 's/$/\t#{sample}/' > #{tmp_file}", :in => io)
+      io.close unless io.closed?
+      Open.open(tmp_file)
     end
 
     pasted = TSV.paste_streams ios, :same_fields => true

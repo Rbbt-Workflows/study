@@ -189,29 +189,29 @@ CohortTasks = Proc.new do
     end
   end
 
-  dep :mutation_incidence
-  dep :genomic_mutation_consequence
-  task :mi_incidence => :tsv do |threshold|
-    
-    pasted = TSV.paste_streams [step(:genomic_mutation_consequence), step(:mutation_incidence)], :fix_flat => true
+  #dep :mutation_incidence
+  #dep :genomic_mutation_consequence
+  #task :mi_incidence => :tsv do |threshold|
+  #  
+  #  pasted = TSV.paste_streams [step(:genomic_mutation_consequence), step(:mutation_incidence)], :fix_flat => true
 
-    dumper = TSV::Dumper.new :key_field => "Mutated Isoform", :fields => ["Sample"], :namespace => organism, :type => :flat
-    dumper.init
-    TSV.traverse pasted, :into => dumper, :type => :array, :bar => "Mutated Isoform incidence" do |line|
-      next if line =~ /^#/
-      mut, mis_str, sample_str = line.split("\t")
+  #  dumper = TSV::Dumper.new :key_field => "Mutated Isoform", :fields => ["Sample"], :namespace => organism, :type => :flat
+  #  dumper.init
+  #  TSV.traverse pasted, :into => dumper, :type => :array, :bar => "Mutated Isoform incidence" do |line|
+  #    next if line =~ /^#/
+  #    mut, mis_str, sample_str = line.split("\t")
 
-      res = []
-      res.extend MultipleResult
-      samples = sample_str.split("|") 
-      mis_str.split("|").each do |mi|
-        res << [mi, samples]
-      end
-      res
-    end
+  #    res = []
+  #    res.extend MultipleResult
+  #    samples = sample_str.split("|") 
+  #    mis_str.split("|").each do |mi|
+  #      res << [mi, samples]
+  #    end
+  #    res
+  #  end
 
-    TSV.collapse_stream(dumper.stream)
-  end
+  #  TSV.collapse_stream(dumper.stream)
+  #end
 
   dep Sample, :mi, :compute => :bootstrap do |jobname, options|
     study = Study.setup(jobname.dup)
@@ -220,19 +220,20 @@ CohortTasks = Proc.new do
   task :mi_incidence => :tsv do |threshold|
     
     FileUtils.mkdir files_dir unless File.exists? files_dir
-    ios = dependencies.collect do |dep|
+
+    log :add_sample, "Add sample to mi result"
+    all_file = file('all')
+    dependencies.each do |dep|
       io = TSV.get_stream dep
       sample = dep.clean_name.split(":").last
       tmp_file = file(sample)
-      tmp_file_orig = tmp_file_orig
-      Misc.consume_stream(io, false, tmp_file_orig)
-      CMD.cmd("sed 's/$/\t#{sample}/' > #{tmp_file}", :in => io)
-      io.close unless io.closed?
-      Open.open(tmp_file)
+      Misc.consume_stream(io, false, tmp_file)
+      `sed 's/$/\t#{sample}/' #{tmp_file} >> #{all_file}`
     end
 
-    pasted = TSV.paste_streams ios, :same_fields => true
+    pasted = Misc.collapse_stream Misc.sort_stream(all_file)
 
+    log :join, "Join pasted streams"
     dumper = TSV::Dumper.new :key_field => "Mutated Isoform", :fields => ["Sample"], :namespace => organism, :type => :double
     dumper.init
     TSV.traverse pasted, :into => dumper, :type => :array, :bar => "Mutated Isoform incidence" do |line|

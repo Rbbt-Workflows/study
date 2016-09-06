@@ -213,7 +213,7 @@ CohortTasks = Proc.new do
   #  TSV.collapse_stream(dumper.stream)
   #end
 
-  dep Sample, :mi, :compute => :bootstrap do |jobname, options|
+  dep Sample, :mi, :file => nil, :vcf => false, :compute => :bootstrap do |jobname, options|
     study = Study.setup(jobname.dup)
     study.genotyped_samples.collect{|sample| Sample.setup(sample, :cohort => study) unless Sample === sample; sample.mi(:job, options) }.flatten
   end
@@ -222,13 +222,13 @@ CohortTasks = Proc.new do
     FileUtils.mkdir files_dir unless File.exists? files_dir
 
     log :add_sample, "Add sample to mi result"
-    all_file = file('all')
+    all_file = file('all').find
     dependencies.each do |dep|
       io = TSV.get_stream dep
       sample = dep.clean_name.split(":").last
-      tmp_file = file(sample)
+      tmp_file = file(sample).find
       Misc.consume_stream(io, false, tmp_file)
-      `sed 's/$/\t#{sample}/' #{tmp_file} >> #{all_file}`
+      `sed 's/$/\t#{sample}/' '#{tmp_file}' >> '#{all_file}'`
     end
 
     pasted = Misc.collapse_stream Misc.sort_stream(all_file)

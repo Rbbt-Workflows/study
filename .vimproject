@@ -70,8 +70,8 @@ Study=/$PWD filter="*.rb *.R *.js *.sass *.haml *.tsv" {
    }
    entity_list=entity_list{
     Gene=Gene{
-     study_report.haml
      incidence.haml
+     study_report.haml
     }
     GenomicMutation=GenomicMutation{
      study_report.haml

@@ -54,6 +54,8 @@ module Study
         when nil, TrueClass
           job.produce(false,true)
           raise job.get_exception if job.error?
+          raise "Job aborted: #{job.path}" if job.aborted?
+          raise "Job not done (#{job.status}): #{job.path}" if not job.done?
           job.load
         when :path
           job.produce(false,true)

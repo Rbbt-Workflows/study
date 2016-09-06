@@ -90,13 +90,21 @@ else
   a2_pos  = a_pos
 end
 d_pos  = Misc.field_position all_fields, d_field
-sf_pos = Misc.field_position all_fields, sf_field
+if sf_field == 'none'
+ sf_pos = -1
+else
+ sf_pos = Misc.field_position all_fields, sf_field
+end
 
 $directory = './project' unless $directory
 
 $sample_streams = {}
 def sample_stream(sample, study)
-  mutation_file = File.join($directory, study, 'genotypes', sample)
+  if study
+   mutation_file = File.join($directory, study, 'genotypes', sample)
+  else
+   mutation_file = File.join($directory, 'genotypes', sample)
+  end
   FileUtils.mkdir_p File.dirname(mutation_file) unless File.exists? File.dirname(mutation_file)
   Open.open(mutation_file, :mode => 'a')
 end
@@ -110,6 +118,8 @@ TSV.traverse filename, :bar => true, :type => :array do |line|
     line = Misc.fixutf8 line
   next if line =~ /Chromosome/
   chr, start, eend, ref, _mut1, _mut2, sample, study = line.split("\t").values_at c_pos, s_pos, e_pos, r_pos, a_pos, a2_pos, d_pos, sf_pos
+  study = nil if sf_pos == -1
+
   next if blacklist.include? sample
 
   start = start.to_i
@@ -143,8 +153,8 @@ map_file = options[:mappable_regions]
 studies.each do |study|
   metadata = metadata_all.dup
   metadata[:condition] = study
-  Open.write(File.join($directory, study, 'metadata.yaml'), metadata.to_yaml)
-  FileUtils.cp map_file, File.join($directory, study, 'mappable_regions') if map_file
+  Open.write(File.join($directory, study || "", 'metadata.yaml'), metadata.to_yaml)
+  FileUtils.cp map_file, File.join($directory, study || "", 'mappable_regions') if map_file
 end
 
 # ADD EXPRESSION
@@ -184,7 +194,7 @@ if options[:expression]
 
       study_matrix = matrix.slice(sample_equivalence.keys & matrix_fields)
       study_matrix.fields = sample_equivalence.chunked_values_at study_matrix.fields
-      Open.write(File.join($directory, study, 'matrices', 'gene_expression', 'data'), study_matrix.to_s)
+      Open.write(File.join($directory, study || "", 'matrices', 'gene_expression', 'data'), study_matrix.to_s)
     end
 
     if options[:expression_id_normal]
@@ -204,7 +214,7 @@ if options[:expression]
 
         study_matrix = matrix.slice(sample_equivalence.keys & matrix.fields)
         study_matrix.fields = sample_equivalence.chunked_values_at study_matrix.fields
-        Open.write(File.join($directory, study, 'matrices', 'gene_expression', 'data_normal'), study_matrix.to_s)
+        Open.write(File.join($directory, study || "", 'matrices', 'gene_expression', 'data_normal'), study_matrix.to_s)
       end
     end
   end

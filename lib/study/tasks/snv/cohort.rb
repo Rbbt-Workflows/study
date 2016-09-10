@@ -274,7 +274,7 @@ CohortTasks = Proc.new do
   task :sorted_significant_genes => :array do |threshold|
     Step.wait_for_jobs dependencies
     field_pos = TSV.parse_header(step(:binomial_significance).path).all_fields.index "p.value"
-    CMD.cmd("env LC_ALL=C sort -k #{field_pos + 1} -g -  | cut -f 1", :pipe => true, :in => Open.open(step(:binomial_significance).path))
+    CMD.cmd("env LC_ALL=C sort -k #{field_pos + 1} -g -  | cut -f 1 |grep -v '#'", :pipe => true, :in => Open.open(step(:binomial_significance).path))
   end
 
   dep :gene_damage_bias
@@ -290,7 +290,7 @@ CohortTasks = Proc.new do
   task :sorted_damage_biased_genes => :array do |threshold|
     Step.wait_for_jobs dependencies
     field_pos = TSV.parse_header(step(:gene_damage_bias).path).all_fields.index "p.value"
-    CMD.cmd("env LC_ALL=C sort -k #{field_pos + 1} -g -  | cut -f 1", :pipe => true, :in => Open.open(step(:gene_damage_bias).path))
+    CMD.cmd("env LC_ALL=C sort -k #{field_pos + 1} -g -  | cut -f 1 |grep -v '#'", :pipe => true, :in => Open.open(step(:gene_damage_bias).path))
   end
 
   task :mappable_genes => :array do |threshold|

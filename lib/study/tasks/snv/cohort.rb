@@ -114,9 +114,8 @@ CohortTasks = Proc.new do
           sample = job.clean_name.split(":").last
           TSV.traverse job, :type => :array do |line|
             next if line =~ /^#/
-              gene,*rest = line.split("\t")
-            parts = [gene, sample]
-            parts.concat rest
+            gene,_sep,status = line.partition("\t")
+            parts = [gene, sample, status]
             sin.puts parts * "\t"
           end
         end

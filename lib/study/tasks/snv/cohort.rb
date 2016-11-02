@@ -233,7 +233,7 @@ CohortTasks = Proc.new do
     pasted = Misc.collapse_stream Misc.sort_stream(all_file)
 
     log :join, "Join pasted streams"
-    dumper = TSV::Dumper.new :key_field => "Mutated Isoform", :fields => ["Sample"], :namespace => organism, :type => :double
+    dumper = TSV::Dumper.new :key_field => "Mutated Isoform", :fields => ["Sample"], :namespace => organism, :type => :flat
     dumper.init
     TSV.traverse pasted, :into => dumper, :type => :array, :bar => "Mutated Isoform incidence" do |line|
       next if line =~ /^#/

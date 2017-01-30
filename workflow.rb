@@ -52,8 +52,11 @@ module Study
 
         case run
         when nil, TrueClass
-          job.produce(false,true)
-          raise job.get_exception if job.error?
+          job.produce
+          if job.error?
+            exception = job.get_exception
+            raise exception
+          end
           raise "Job aborted: #{job.path}" if job.aborted?
           raise "Job not done (#{job.status}): #{job.path}" if not job.done?
           job.load

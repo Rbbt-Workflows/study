@@ -37,11 +37,11 @@ module Study
     source_field, count = TSV.guess_id sample_info, list
     target_field, count = TSV.guess_id sample_info, target_list
     if through_field
-      index_1 = sample_info.index(:target => through_field)
-      index_2 = sample_info.index(:target => target_field)
+      index_1 = sample_info.reorder(source_field, [through_field], :merge => true).to_flat
+      index_2 = sample_info.reorder(through_field, [target_field], :merge => true).to_flat
 
-      tmp = index_1.chunked_values_at(list).compact
-      res = index_2.chunked_values_at(tmp).compact
+      tmp = index_1.chunked_values_at(list).compact.flatten
+      res = index_2.chunked_values_at(tmp).compact.flatten
       res
     else
       sample_info.index(:target => target_field).values_at *list

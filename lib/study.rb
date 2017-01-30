@@ -54,12 +54,12 @@ module Study
     organism = study_info(study)[:organism]
 
     if path.exists?
-      tsv = path.tsv :namespace => organism 
+      tsv = path.tsv :namespace => organism, :merge => true, :type => :double 
       tsv.entity_options = {:cohort => study, :organism => organism}
       tsv
     else
       samples = genotyped_samples(study)
-      tsv = TSV.setup(samples, :key_field => "Sample", :fields => [], :type => :list, :namespace => organism)
+      tsv = TSV.setup(samples, :key_field => "Sample", :fields => [], :type => :list, :namespace => organism, :merge => true)
       tsv.entity_options = {:cohort => study, :organism => organism}
       tsv
     end

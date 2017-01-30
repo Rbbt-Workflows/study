@@ -22,6 +22,7 @@ Access workflow knowledge base
 -d--details Print details on matches
 -i--identify Attempt to identify entities by identifier translation
 -tsv--tsv Output TSV
+-W--workflows* Load workflows (comma separated)
 EOF
 
 workflow = Workflow.require_workflow "Study"
@@ -30,6 +31,12 @@ usage and exit -1 if workflow.nil? or options[:help]
 study        = ARGV.shift
 database     = ARGV.shift
 action       = ARGV.shift
+
+if options[:workflows]
+  options[:workflows].split(",").each do |workflow|
+    Workflow.require_workflow workflow.strip
+  end
+end
 
 # Get workflow
 

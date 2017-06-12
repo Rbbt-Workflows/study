@@ -103,7 +103,7 @@ module Study
     sample_info = sample_info_file(study)
     value_type = study_info(study)[:expression_type]
     organism = study_info(study)[:organism]
-    Matrix.new file.find, sample_info, value_type, format, organism
+    RbbtMatrix.new file.find, sample_info, value_type, format, organism
   end
 
   def self.studies

@@ -68,7 +68,6 @@ CohortTasks = Proc.new do
     study.genotyped_samples.collect{|sample| Sample.setup(sample, :cohort => study) unless Sample === sample; sample.gene_sample_mutation_status(:job, options) }.flatten
   end
   task :sample_gene_mutations => :tsv do
-    Step.wait_for_jobs dependencies
     parser = TSV::Parser.new dependencies.first
     fields = parser.fields
     fields.unshift "Sample"

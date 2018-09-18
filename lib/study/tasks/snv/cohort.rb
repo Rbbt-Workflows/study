@@ -217,19 +217,22 @@ CohortTasks = Proc.new do
   end
   task :mi_incidence => :tsv do |threshold|
     
-    FileUtils.mkdir files_dir unless File.exists? files_dir
+    Open.mkdir files_dir unless Open.exists? files_dir
 
     log :add_sample, "Add sample to mi result"
-    all_file = file('all').find
-    dependencies.each do |dep|
-      io = TSV.get_stream dep
-      sample = dep.clean_name.split(":").last
-      tmp_file = file(sample).find
-      Misc.consume_stream(io, false, tmp_file)
-      `sed 's/$/\t#{sample}/' '#{tmp_file}' >> '#{all_file}'`
-    end
+    pasted = TmpFile.with_file do |all_file|
+      dependencies.each do |dep|
+        io = TSV.get_stream dep
+        sample = dep.clean_name.split(":").last
+        TmpFile.with_file do |tmp_file|
+          #tmp_file = file(sample).find
+          Misc.consume_stream(io, false, tmp_file)
+          `sed 's/$/\t#{sample}/' '#{tmp_file}' >> '#{all_file}'`
+        end
+      end
 
-    pasted = Misc.collapse_stream Misc.sort_stream(all_file)
+      Misc.collapse_stream Misc.sort_stream(all_file)
+    end
 
     log :join, "Join pasted streams"
     dumper = TSV::Dumper.new :key_field => "Mutated Isoform", :fields => ["Sample"], :namespace => organism, :type => :flat
@@ -714,6 +717,18 @@ data
   end
   task :num_genomic_mutations => :integer do
     dependencies.inject(0){|acc,dep| acc += dep.load}
+  end
+
+  dep Sample, :num_genomic_mutations, :compute => :bootstrap do |jobname,options|
+    study = Study.setup(jobname.dup)
+    study.genotyped_samples.collect do |sample|
+      sample.num_genomic_mutations(:job)
+    end
+  end
+  task :num_genomic_mutations_by_sample => :tsv do
+    tsv = TSV.setup({}, "Sample~num genomic mutations#:type=:single")
+    dependencies.inject(0){|acc,dep| tsv[dep.sample] = dep.load}
+    tsv
   end
 
 end

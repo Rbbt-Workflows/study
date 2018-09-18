@@ -25,7 +25,7 @@ module Study
     size = Math.sqrt(dependencies.length).to_i + 1
     chunks = Misc.ordered_divide(dependencies, size)
     bar = self.progress_bar("Processing sample chunks", :max => chunks.length)
-    TSV.traverse (0..chunks.length-1).to_a, :cpus => 5 do |i|
+    TSV.traverse (0..chunks.length-1).to_a, :cpus => 6 do |i|
       bar.tick
       dep_list = chunks[i]
       streams = dep_list.collect do |dep|

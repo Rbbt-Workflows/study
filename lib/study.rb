@@ -26,7 +26,11 @@ module Study
 
   def self.study_info(study)
     path = find_study(study)
-    path["metadata.yaml"].yaml
+    begin
+      IndiferentHash.setup(path["metadata.yaml"].yaml)
+    rescue
+      IndiferentHash.setup({})
+    end
   end
 
   def self.users(study)
@@ -35,6 +39,7 @@ module Study
 
   def self.genotyped_samples(study)
     path = find_study(study)
+    return path.genotyped_samples.read.split("\n") if path.genotyped_samples.exists?
     samples = path.genotypes.vcf.glob("*").collect{|f| File.basename(f).sub(/\.vcf.*/,'') }
     return samples if samples.any?
     path.genotypes.glob("*").collect{|f| File.basename f }

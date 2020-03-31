@@ -63,8 +63,8 @@ module Study
           begin
             study_options = Study.study_info(job.clean_name)
             study_options.each do |k,v|
-              if res.respond_to? k + "="
-                res.send(k + "=", v)
+              if res.respond_to?(k.to_s + "=")
+                res.send(k.to_s + "=", v)
               end
             end
           rescue

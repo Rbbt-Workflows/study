@@ -13,17 +13,18 @@
   - Study.setup studies
 
   - TSV.traverse studies.to_a, :type => :array, :respawn => :always, :bar => @step.progress_bar('Processing studies') do |study|
-    - Study.setup(study)
-    - next unless study.has_genotypes?
-    - log :knowledge_base, study + " Knowledge Base"
-    - kb = study.knowledge_base
-    - all_matches[study.to_s] = kb.subset(:sample_genes, :target => list, :source => :all)
-    - log :pvalues, study + " Binomial P-values"
-    - pvalues[study.to_s] = begin
-      - bs = study.binomial_significance
-      - list.select{|g| bs.include?(g) and bs[g].last.to_f < 0.1 }
+    - begin
+      - Study.setup(study)
+      - next unless study.has_genotypes?
+      - log :knowledge_base, study + " Knowledge Base"
+      - kb = study.knowledge_base
+      - all_matches[study.to_s] = kb.subset(:sample_genes, :target => list, :source => :all)
+      - log :pvalues, study + " Binomial P-values"
+      - pvalues[study.to_s] = begin
+        - bs = study.binomial_significance
+        - list.select{|g| bs.include?(g) and bs[g].last.to_f < 0.1 }
     - rescue
-      - raise "Binomial significance for #{study} failed: #{$!.message}
+      - raise "Binomial significance for #{study} failed: #{$!.message}"
 
 
   - fields = %w(Overlapping Affected Damaged Miss-spliced Broken Significant)

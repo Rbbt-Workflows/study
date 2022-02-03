@@ -59,7 +59,18 @@ module Study
           end
           raise "Job aborted: #{job.path}" if job.aborted?
           raise "Job not done (#{job.status}): #{job.path}" if not job.done?
-          job.load
+          res = job.load
+          begin
+            study_options = Study.study_info(job.clean_name)
+            study_options.each do |k,v|
+              if res.respond_to? k + "="
+                res.send(k + "=", v)
+              end
+            end
+          rescue
+            Log.exception $!
+          end
+          res
         when :path
           job.produce(false,true)
           raise job.get_exception if job.error?

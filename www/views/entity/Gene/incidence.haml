@@ -28,6 +28,9 @@
     - pvalues[study.to_s] = begin
       - pvalue = study.job(:binomial_significance).run[gene]
       - pvalue.nil? ? 1 : pvalue["p.value"]
+    - rescue
+      - raise "Binomial significance for #{study} failed: #{$!.message}"
+
 
   - fields = %w(Overlapping Affected Damaged Splicing Broken P-value)
   - tsv = TSV.setup({}, :key_field => "Study", :fields => fields, :type => :double)

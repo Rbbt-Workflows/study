@@ -6,7 +6,7 @@ CohortTasks = Proc.new do
   helper :feature_WGS_residues do
     Persist.persist("WGS firestar feature counts", :marshal) do
       feature_WGS_residues = {}
-      TSV.traverse Structure.appris_dataset do |transcript, values|
+      TSV.traverse Proteomics.appris_dataset do |transcript, values|
         transcript = transcript.first if Array === transcript
         next unless Appris::PRINCIPAL_TRANSCRIPTS.include? transcript
         gene, fire, spade, thump, crash = values
@@ -26,7 +26,7 @@ CohortTasks = Proc.new do
       ensp2sequence = Organism.protein_sequence(organism).tsv :persist => true, :unnamed => true
       enst2ensp = Organism.transcripts(organism).index :persist => true, :target => "Ensembl Protein ID", :fields => ["Ensembl Transcript ID"], :unnamed => true
       total = 0
-      TSV.traverse Structure.appris_dataset do |transcript, values|
+      TSV.traverse Proteomics.appris_dataset do |transcript, values|
         transcript = transcript.first if Array === transcript
         next unless Appris::PRINCIPAL_TRANSCRIPTS.include? transcript
         protein = enst2ensp[transcript]

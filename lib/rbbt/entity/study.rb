@@ -55,8 +55,9 @@ module Study
                                     knowledge_base = KnowledgeBase.new Study.knowledge_base_dir[self], self.organism
 
                                     knowledge_base.format["Gene"] = "Ensembl Gene ID"
-                                    knowledge_base.entity_options["Sample"] = {:cohort => self }
-                                    knowledge_base.entity_options["GenomicMutation"] = {:watson => watson }
+                                    knowledge_base.entity_options["Sample"] = {:cohort => self, :organism => self.organism }
+                                    knowledge_base.entity_options["Gene"] = {:cohort => self, :organism => self.organism }
+                                    knowledge_base.entity_options["GenomicMutation"] = {:watson => watson, :organism => self.organism }
 
                                     if self.has_genotypes?
                                       

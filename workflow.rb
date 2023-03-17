@@ -26,15 +26,15 @@ module Study
   end
 end
 
-require 'study/tasks/samples'
+#require 'study/tasks/samples'
 #require 'study/tasks/genotypes'
 #require 'study/tasks/cnv'
 #Workflow.require_workflow "MutationSignatures"
 #require 'study/tasks/mutation_signatures'
 #require 'study/tasks/expression'
 
-require 'study/tasks/snv'
-require 'study/tasks/maf'
+#require 'study/tasks/snv'
+#require 'study/tasks/maf'
 
 module Study
   extend Entity 

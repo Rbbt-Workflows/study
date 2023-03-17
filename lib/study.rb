@@ -18,7 +18,7 @@ module Study
   end
 
   def self.find_study(study)
-    return Path.setup(File.expand_path(study)) if File.exists?(study)
+    return Path.setup(File.expand_path(study)) if File.exist?(study)
     return study_dir[study] if study_dir[study].exists?
     return Sample.project_repo["*"][study].glob.first if Sample.project_repo["*"][study].glob.any?
     raise "Study not found: #{ study }"

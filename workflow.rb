@@ -44,6 +44,7 @@ module Study
   end
 
   def self.update_task_properties
+    return if Study.tasks.nil?
     Study.tasks.each do |name, b|
       property name.to_sym => :single do |run=true, options={}|
         run, options = true, run if Hash === run

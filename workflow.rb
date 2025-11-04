@@ -80,7 +80,7 @@ module Study
           job
         end
       end
-    end
+    end if Study.tasks
   end
 end
 
